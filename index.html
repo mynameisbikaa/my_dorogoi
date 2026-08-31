@@ -1,3554 +1,397 @@
 ```html
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Biberchik: Rainbow Pepper Harvest</title>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700&display=swap');
-
-:root{
-  --sky-top:#4a5d8f;
-  --sky-bottom:#c9a3c7;
-  --ground:#e9d9b8;
-  --ground-dark:#d3bd8f;
-  --trunk:#6b4a35;
-  --trunk-dark:#4f3527;
-  --leaf1:#5c8a5a;
-  --leaf2:#4a7048;
-  --cream:#faf3e3;
-  --ink:#33241c;
-  --gold:#e0a63a;
-  --rust:#c1654a;
-
-  --r1:#e85c5c;
-  --r2:#f0925a;
-  --r3:#f0d15a;
-  --r4:#7fc36b;
-  --r5:#5aa7d6;
-  --r6:#9b7ad1;
-}
-
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-  margin:0;
-  padding:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  font-family:'Nunito',sans-serif;
-  background:linear-gradient(
-    180deg,
-    var(--sky-top) 0%,
-    var(--sky-bottom) 70%
-  );
-  touch-action:none;
-}
-
-#wrap{
-  position:relative;
-  width:100%;
-  height:100vh;
-  height:100dvh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-#stage{
-  position:relative;
-  width:min(100vw,177.7vh);
-  height:min(100vh,56.25vw);
-  height:min(100dvh,56.25vw);
-  background:
-    linear-gradient(
-      180deg,
-      transparent 0%,
-      transparent 75%,
-      var(--ground) 75%,
-      var(--ground-dark) 100%
-    );
-  overflow:hidden;
-}
-
-canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  display:block;
-  touch-action:none;
-}
-
-/* ================= HUD ================= */
-
-#hud{
-  position:absolute;
-  top:14px;
-  left:14px;
-  right:14px;
-
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-
-  font-family:'Baloo 2',sans-serif;
-  pointer-events:none;
-  z-index:5;
-}
-
-#score{
-  background:rgba(51,36,28,0.55);
-  color:var(--cream);
-  padding:8px 18px;
-  border-radius:999px;
-  font-size:20px;
-  font-weight:700;
-  letter-spacing:.5px;
-  backdrop-filter:blur(2px);
-}
-
-#lives{
-  display:flex;
-  gap:6px;
-  background:rgba(51,36,28,0.55);
-  padding:8px 14px;
-  border-radius:999px;
-}
-
-.heart{
-  font-size:18px;
-  filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));
-}
-
-/* ================= OVERLAYS ================= */
-
-.overlay{
-  position:absolute;
-  inset:0;
-
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-
-  text-align:center;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(74,64,110,.55) 0%,
-      rgba(30,24,48,.78) 100%
-    );
-
-  color:var(--cream);
-  z-index:10;
-
-  padding:24px;
-}
-
-.overlay h1{
-  font-family:'Baloo 2',sans-serif;
-  font-size:clamp(28px,5vw,46px);
-  line-height:1.05;
-  margin:0 0 6px 0;
-  color:#fff4e0;
-  text-shadow:0 3px 0 rgba(0,0,0,.25);
-}
-
-.overlay p{
-  font-size:clamp(14px,2vw,17px);
-  max-width:520px;
-  line-height:1.5;
-  margin:6px 0 18px 0;
-  color:#efe4f5;
-}
-
-.rainbow-word{
-  background:
-    linear-gradient(
-      90deg,
-      var(--r1),
-      var(--r2),
-      var(--r3),
-      var(--r4),
-      var(--r5),
-      var(--r6)
-    );
-
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-}
-
-button.play{
-  font-family:'Baloo 2',sans-serif;
-  font-size:19px;
-  font-weight:700;
-
-  color:#3a2416;
-
-  background:
-    linear-gradient(
-      180deg,
-      #f6d98a,
-      var(--gold)
-    );
-
-  border:none;
-  padding:13px 34px;
-  border-radius:999px;
-
-  cursor:pointer;
-
-  box-shadow:
-    0 5px 0 #a9761f,
-    0 8px 14px rgba(0,0,0,.35);
-
-  transition:transform .08s ease;
-}
-
-button.play:active{
-  transform:translateY(4px);
-  box-shadow:0 1px 0 #a9761f;
-}
-
-.hint{
-  margin-top:16px;
-  font-size:13px;
-  color:#d8c9e6;
-
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-
-.hidden{
-  display:none !important;
-}
-
-/* ================= SKINS ================= */
-
-.skin-select{
-  display:flex;
-  gap:12px;
-  margin:4px 0 18px 0;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-
-.skin-option{
-  appearance:none;
-
-  background:rgba(255,255,255,.08);
-
-  border:2px solid transparent;
-  border-radius:16px;
-
-  padding:8px 10px 7px;
-
-  cursor:pointer;
-
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-
-  gap:5px;
-
-  transition:
-    border-color .15s ease,
-    background .15s ease,
-    transform .1s ease;
-
-  color:#efe4f5;
-
-  font-family:'Baloo 2',sans-serif;
-  font-size:12px;
-  text-align:center;
-}
-
-.skin-option canvas{
-  position:static;
-  width:58px;
-  height:84px;
-  display:block;
-}
-
-.skin-option:hover{
-  background:rgba(255,255,255,.16);
-}
-
-.skin-option.selected{
-  border-color:var(--gold);
-  background:rgba(224,166,58,.2);
-  transform:translateY(-2px);
-}
-
-/* ================= MUSIC ================= */
-
-.music-select{
-  width:min(90vw,720px);
-  max-width:720px;
-
-  max-height:190px;
-  overflow-y:auto;
-
-  margin:2px 0 16px 0;
-  padding:7px;
-
-  background:rgba(0,0,0,.18);
-
-  border-radius:14px;
-
-  scrollbar-width:thin;
-}
-
-.track-row{
-  display:flex;
-  align-items:center;
-
-  gap:10px;
-
-  padding:7px 9px;
-
-  border-radius:10px;
-
-  cursor:pointer;
-
-  margin-bottom:5px;
-
-  background:rgba(255,255,255,.05);
-
-  border:2px solid transparent;
-
-  transition:
-    background .15s ease,
-    border-color .15s ease;
-}
-
-.track-row:last-child{
-  margin-bottom:0;
-}
-
-.track-row:hover{
-  background:rgba(255,255,255,.11);
-}
-
-.track-row.selected{
-  border-color:var(--gold);
-  background:rgba(224,166,58,.16);
-}
-
-.preview-btn{
-  flex:0 0 auto;
-
-  width:30px;
-  height:30px;
-
-  border-radius:50%;
-
-  border:none;
-
-  background:rgba(255,255,255,.18);
-
-  color:#fff;
-
-  font-size:11px;
-
-  cursor:pointer;
-
-  line-height:30px;
-
-  padding:0;
-}
-
-.preview-btn.playing{
-  background:var(--gold);
-  color:#3a2416;
-}
-
-.track-info{
-  flex:1;
-  text-align:left;
-  min-width:0;
-}
-
-.track-name{
-  font-family:'Baloo 2',sans-serif;
-  font-size:13.5px;
-
-  color:#fff4e0;
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.track-meta{
-  font-size:11px;
-  color:#d8c9e6;
-}
-
-/* ================= SONG PROGRESS ================= */
-
-#songProgressWrap{
-  position:absolute;
-
-  top:0;
-  left:0;
-  right:0;
-
-  height:5px;
-
-  background:rgba(0,0,0,.22);
-
-  z-index:6;
-
-  opacity:0;
-
-  transition:opacity .3s ease;
-}
-
-#songProgressWrap.visible{
-  opacity:1;
-}
-
-#songProgressBar{
-  height:100%;
-  width:0%;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--r1),
-      var(--r3),
-      var(--r5)
-    );
-}
-
-/* ================= GAME CONTROLS ================= */
-
-#game-controls{
-  position:absolute;
-
-  bottom:16px;
-  left:50%;
-
-  transform:translateX(-50%);
-
-  display:none;
-
-  gap:10px;
-
-  z-index:7;
-}
-
-.game-btn{
-  border:none;
-
-  border-radius:999px;
-
-  padding:9px 18px;
-
-  font-family:'Baloo 2',sans-serif;
-  font-size:14px;
-  font-weight:700;
-
-  color:#fff4e0;
-
-  background:rgba(51,36,28,.65);
-
-  backdrop-filter:blur(4px);
-
-  cursor:pointer;
-
-  box-shadow:0 3px 8px rgba(0,0,0,.25);
-}
-
-.game-btn:hover{
-  background:rgba(51,36,28,.82);
-}
-
-#btnStop{
-  color:#fff;
-}
-
-#btnMenu{
-  color:#fff4e0;
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width:700px){
-
-  #stage{
-    width:100vw;
-    height:100dvh;
-
-    border-radius:0;
-  }
-
-  #hud{
-    top:10px;
-    left:10px;
-    right:10px;
-  }
-
-  #score{
-    padding:6px 13px;
-    font-size:17px;
-  }
-
-  #lives{
-    padding:6px 10px;
-  }
-
-  .heart{
-    font-size:16px;
-  }
-
-  .overlay{
-    padding:
-      max(18px, env(safe-area-inset-top))
-      15px
-      max(18px, env(safe-area-inset-bottom));
-    overflow-y:auto;
-    justify-content:center;
-  }
-
-  .overlay h1{
-    font-size:clamp(27px,8vw,38px);
-  }
-
-  .overlay p{
-    font-size:14px;
-    max-width:92vw;
-    margin-bottom:12px;
-  }
-
-  .skin-select{
-    gap:6px;
-    margin-bottom:10px;
-  }
-
-  .skin-option{
-    padding:5px 6px;
-    border-radius:12px;
-    font-size:10px;
-  }
-
-  .skin-option canvas{
-    width:43px;
-    height:62px;
-  }
-
-  .music-select{
-    width:94vw;
-    max-height:24vh;
-    min-height:110px;
-    margin-bottom:12px;
-  }
-
-  .track-row{
-    padding:6px 7px;
-    gap:8px;
-  }
-
-  .track-name{
-    font-size:12px;
-  }
-
-  .track-meta{
-    font-size:10px;
-  }
-
-  button.play{
-    font-size:18px;
-    padding:11px 30px;
-  }
-
-  .hint{
-    font-size:11px;
-    gap:7px;
-    margin-top:10px;
-  }
-
-  #game-controls{
-    display:flex;
-    bottom:
-      max(12px, env(safe-area-inset-bottom));
-  }
-
-  .game-btn{
-    padding:8px 15px;
-    font-size:13px;
-  }
-}
-
-/* Small phones */
-@media (max-width:390px){
-
-  .skin-option canvas{
-    width:38px;
-    height:55px;
-  }
-
-  .skin-option{
-    font-size:9px;
-    padding:4px;
-  }
-
-  .music-select{
-    max-height:22vh;
-  }
-
-  .overlay h1{
-    font-size:27px;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div id="wrap">
-
-  <div id="stage">
-
-    <canvas id="game"></canvas>
-
-    <div id="hud">
-      <div id="score">🌶️ 0</div>
-      <div id="lives"></div>
-    </div>
-
-    <!-- Game controls -->
-    <div id="game-controls">
-      <button class="game-btn" id="btnStop">■ Stop</button>
-      <button class="game-btn" id="btnMenu">☰ Main Menu</button>
-    </div>
-
-    <!-- Start screen -->
-    <div class="overlay" id="startScreen">
-
-      <h1>
-        Biberchik<br>
-        <span class="rainbow-word">
-          Doğa and the Rainbow Pepper Tree
-        </span>
-      </h1>
-
-      <p>
-        A curly-haired boy in round glasses has come out under
-        the old biberchik tree — rainbow-colored peppers are falling
-        from it. Catch them in your basket, but watch out for the
-        prickly brown pods!
-      </p>
-
-      <div class="skin-select" id="skinSelect">
-
-        <button class="skin-option"
-                data-skin="pioneer"
-                type="button">
-          <canvas width="90" height="130"></canvas>
-          <span>Pioneer</span>
-        </button>
-
-        <button class="skin-option"
-                data-skin="whitewig"
-                type="button">
-          <canvas width="90" height="130"></canvas>
-          <span>Ongo</span>
-        </button>
-
-        <button class="skin-option"
-                data-skin="greenshirt"
-                type="button">
-          <canvas width="90" height="130"></canvas>
-          <span>Comsol Boss</span>
-        </button>
-
-        <button class="skin-option"
-                data-skin="guitarist"
-                type="button">
-          <canvas width="90" height="130"></canvas>
-          <span>Ukulele Boss</span>
-        </button>
-
-        <button class="skin-option"
-                data-skin="trench"
-                type="button">
-          <canvas width="90" height="130"></canvas>
-          <span>Winter Edition</span>
-        </button>
-
-      </div>
-
-      <div class="music-select" id="musicSelect"></div>
-
-      <button class="play" id="btnStart">
-        Play
-      </button>
-
-      <div class="hint">
-        <span>⌨️ ← → to move</span>
-        <span>📱 drag your finger to move</span>
-        <span>🎵 survive to the end of the track</span>
-      </div>
-
-    </div>
-
-    <!-- End screen -->
-    <div class="overlay hidden" id="endScreen">
-
-      <h1 id="endTitle">
-        Harvest Complete!
-      </h1>
-
-      <p id="finalScoreText"></p>
-
-      <button class="play" id="btnRestart">
-        Play Again
-      </button>
-
-    </div>
-
-    <div id="songProgressWrap">
-      <div id="songProgressBar"></div>
-    </div>
-
-  </div>
-</div>
-
-
-<script>
-(function(){
-
-/* ============================================================
-   BASIC SETUP
-============================================================ */
-
-const stage = document.getElementById('stage');
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-
-const scoreEl = document.getElementById('score');
-const livesEl = document.getElementById('lives');
-
-const startScreen = document.getElementById('startScreen');
-const endScreen = document.getElementById('endScreen');
-
-const finalScoreText =
-  document.getElementById('finalScoreText');
-
-const endTitleEl =
-  document.getElementById('endTitle');
-
-const songProgressWrap =
-  document.getElementById('songProgressWrap');
-
-const songProgressBar =
-  document.getElementById('songProgressBar');
-
-const btnStop =
-  document.getElementById('btnStop');
-
-const btnMenu =
-  document.getElementById('btnMenu');
-
-let W;
-let H;
-let DPR;
-
-function resize(){
-
-  const rect =
-    stage.getBoundingClientRect();
-
-  DPR =
-    Math.min(window.devicePixelRatio || 1, 2);
-
-  W = rect.width;
-  H = rect.height;
-
-  canvas.width = W * DPR;
-  canvas.height = H * DPR;
-
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-
-  ctx.setTransform(
-    DPR,
-    0,
-    0,
-    DPR,
-    0,
-    0
-  );
-}
-
-window.addEventListener(
-  'resize',
-  resize
-);
-
-resize();
-
-
-/* ============================================================
-   GAME STATE
-============================================================ */
-
-const GROUND_Y_RATIO = 0.78;
-
-let running = false;
-
-let score = 0;
-let lives = 3;
-
-let peppers = [];
-let leaves = [];
-
-let spawnTimer = 0;
-let spawnInterval = 900;
-
-let elapsed = 0;
-
-let particles = [];
-
-const boy = {
-
-  x:0,
-  y:0,
-
-  w:64,
-  h:92,
-
-  speed:6.5,
-
-  vx:0,
-
-  dir:1,
-
-  walk:0
-};
-
-const colors = [
-  '#e85c5c',
-  '#f0925a',
-  '#f0d15a',
-  '#7fc36b',
-  '#5aa7d6',
-  '#9b7ad1'
-];
-
-
-/* ============================================================
-   SKINS
-============================================================ */
-
-const SKINS = {
-
-  pioneer:{
-
-    name:'Pioneer',
-
-    hair:'#3a2a18',
-
-    /*
-      Original style:
-      curly / wavy but NOT extremely long
-    */
-    hairStyle:'extra-wavy',
-
-    headwear:'star',
-    headwearColor:'#e0413a',
-
-    glasses:'round',
-    glassesColor:'#3a2416',
-
-    top:'pioneer',
-
-    topColor1:'#f4ede0',
-    topColor2:'#e6ddc9',
-
-    trimColor:'#d6362d',
-
-    neckerchief:'#d6362d',
-
-    pantsColor:'#33475e',
-
-    sleeve:'long'
-  },
-
-  whitewig:{
-
-    name:'Ongo',
-
-    hair:'#f4f4f4',
-
-    hairStyle:'bob',
-
-    headwear:'none',
-    headwearColor:'transparent',
-
-    glasses:'big-square',
-    glassesColor:'#111111',
-
-    top:'turtleneck',
-
-    topColor1:'#161616',
-    topColor2:'#0d0d0d',
-
-    trimColor:'#0d0d0d',
-
-    pantsColor:'#131313',
-
-    sleeve:'long'
-  },
-
-  greenshirt:{
-
-    name:'Comsol Boss',
-
-    hair:'#3f2b1a',
-
-    hairStyle:'extra-wavy-short',
-
-    headwear:'none',
-    headwearColor:'transparent',
-
-    glasses:'round',
-    glassesColor:'#3a2416',
-
-    top:'shirt-short',
-
-    topColor1:'#5a9a5c',
-    topColor2:'#487d4a',
-
-    trimColor:'#2f5c34',
-
-    pantsColor:'#3d2a1a',
-
-    sleeve:'short',
-
-    pocketProtector:true
-  },
-
-  guitarist:{
-
-    name:'Ukulele Boss',
-
-    hair:'#3f2b1a',
-
-    hairStyle:'extra-wavy-short',
-
-    headwear:'headband',
-    headwearColor:'#c1654a',
-
-    glasses:'round',
-    glassesColor:'#3a2416',
-
-    top:'vest',
-
-    topColor1:'#e8b84b',
-    topColor2:'#d9a23a',
-
-    trimColor:'#c1654a',
-
-    pantsColor:'#a8632f',
-
-    sleeve:'long',
-
-    accessory:'guitar'
-  },
-
-  trench:{
-
-    name:'Winter Edition',
-
-    hair:'#3f2b1a',
-
-    hairStyle:'extra-wavy-short',
-
-    headwear:'none',
-    headwearColor:'transparent',
-
-    glasses:'round',
-    glassesColor:'#3a2416',
-
-    top:'trench',
-
-    topColor1:'#d8c3a0',
-    topColor2:'#c2a97e',
-
-    trimColor:'#7a5a3a',
-
-    pantsColor:'#2e2e2e',
-
-    sleeve:'long'
-  }
-};
-
-let currentSkin = 'pioneer';
-
-
-/* ============================================================
-   MUSIC
-============================================================ */
-
-const TRACKS = [
-
-  {
-    id:'t1',
-    name:'I Love You',
-    file:'iloveyou.mp3'
-  },
-
-  {
-    id:'t2',
-    name:'Army Dreamers',
-    file:'army_dreamers.mp3'
-  },
-
-  {
-    id:'t3',
-    name:'Instant Crush',
-    file:'instant_crush.mp3'
-  },
-
-  {
-    id:'t4',
-    name:'Everything Stays',
-    file:'adventure_time-everything_stays.mp3'
-  },
-
-  {
-    id:'t5',
-    name:'Моя дорогая — Моя дорогая',
-    file:'moya_dorogaya-moya_dorogaya.mp3'
-  },
-
-  {
-    id:'t6',
-    name:'Schism',
-    file:'schism.mp3'
-  },
-
-  {
-    id:'t7',
-    name:'Selfless',
-    file:'selfless.mp3'
-  },
-
-  {
-    id:'t8',
-    name:'How Strange It Is to Feel Anything At All',
-    file:'how_strange_it_is_to_feel_anything_at_all.mp3'
-  },
-
-  {
-    id:'t9',
-    name:'Моя дорогая — Три-Четыре',
-    file:'moya_dorogaya-tri_chetyre.mp3'
-  },
-
-  {
-    id:'t10',
-    name:'Pictures of You',
-    file:'the_cure-pictures_of_you.mp3'
-  },
-
-  {
-    id:'t11',
-    name:'The Pot',
-    file:'thepot.mp3'
-  },
-
-  {
-    id:'t12',
-    name:'Jigsaw Falling Into Place',
-    file:'radiohead-jigsaw_falling_into_place.mp3'
-  },
-
-  {
-    id:'t13',
-    name:'Harness Your Hopes (B-side)',
-    file:'harness_your_hopes_b-side_pavement.mp3'
-  },
-
-  {
-    id:'t14',
-    name:'Ode to the Mets',
-    file:'the_strokes-ode_to_the_mets.mp3'
-  },
-
-  {
-    id:'t15',
-    name:'Gelir miyim?',
-    file:'gelir_miyim.mp3'
-  }
-];
-
-let currentTrackId = TRACKS[0].id;
-
-let currentAudio = null;
-let previewAudio = null;
-
-let songPlaying = false;
-
-
-/* ============================================================
-   MUSIC FUNCTIONS
-============================================================ */
-
-function stopMusic(){
-
-  songPlaying = false;
-
-  if(currentAudio){
-
-    currentAudio.pause();
-
-    currentAudio.onended = null;
-
-    currentAudio = null;
-  }
-
-  if(previewAudio){
-
-    previewAudio.pause();
-
-    previewAudio.currentTime = 0;
-
-    previewAudio = null;
-  }
-
-  document
-    .querySelectorAll('.preview-btn.playing')
-    .forEach(btn=>{
-
-      btn.classList.remove('playing');
-
-      btn.textContent = '▶';
-    });
-}
-
-
-/*
-  Preview now plays continuously.
-
-  It DOES NOT stop after 6 seconds.
-  Press the same preview button again to stop it.
-*/
-
-function previewTrack(trackId, btn){
-
-  const isPlaying =
-    btn.classList.contains('playing');
-
-  if(isPlaying){
-
-    stopMusic();
-
-    return;
-  }
-
-  stopMusic();
-
-  const track =
-    TRACKS.find(t=>t.id===trackId);
-
-  if(!track) return;
-
-  const audio =
-    new Audio(track.file);
-
-  audio.volume = 0.8;
-
-  audio.onended = ()=>{
-
-    btn.classList.remove('playing');
-
-    btn.textContent = '▶';
-
-    previewAudio = null;
-  };
-
-  audio.play().catch(()=>{});
-
-  previewAudio = audio;
-
-  btn.classList.add('playing');
-
-  btn.textContent = '■';
-}
-
-
-function playTrack(trackId,onEnd){
-
-  const track =
-    TRACKS.find(t=>t.id===trackId)
-    || TRACKS[0];
-
-  stopMusic();
-
-  const audio =
-    new Audio(track.file);
-
-  audio.volume = 0.8;
-
-  audio.onended = ()=>{
-
-    if(currentAudio === audio){
-
-      songPlaying = false;
-
-      onEnd();
-    }
-  };
-
-  audio.play().catch(()=>{});
-
-  currentAudio = audio;
-
-  songPlaying = true;
-}
-
-
-/* ============================================================
-   MUSIC LIST
-============================================================ */
-
-function renderMusicList(){
-
-  const wrap =
-    document.getElementById('musicSelect');
-
-  wrap.innerHTML = '';
-
-  TRACKS.forEach(track=>{
-
-    const row =
-      document.createElement('div');
-
-    row.className =
-      'track-row' +
-      (
-        track.id === currentTrackId
-        ? ' selected'
-        : ''
-      );
-
-    row.dataset.track =
-      track.id;
-
-
-    const btn =
-      document.createElement('button');
-
-    btn.className =
-      'preview-btn';
-
-    btn.type = 'button';
-
-    btn.textContent = '▶';
-
-
-    btn.addEventListener(
-      'click',
-      e=>{
-
-        e.stopPropagation();
-
-        previewTrack(
-          track.id,
-          btn
-        );
-      }
-    );
-
-
-    const info =
-      document.createElement('div');
-
-    info.className =
-      'track-info';
-
-
-    const name =
-      document.createElement('div');
-
-    name.className =
-      'track-name';
-
-    name.textContent =
-      track.name;
-
-
-    const meta =
-      document.createElement('div');
-
-    meta.className =
-      'track-meta';
-
-    meta.textContent =
-      '…';
-
-
-    info.appendChild(name);
-    info.appendChild(meta);
-
-
-    /*
-      Metadata probe.
-      It doesn't play the music.
-    */
-
-    const probe =
-      new Audio();
-
-    probe.preload =
-      'metadata';
-
-    probe.src =
-      track.file;
-
-    probe.addEventListener(
-      'loadedmetadata',
-      ()=>{
-
-        if(!isFinite(probe.duration)){
-
-          meta.textContent = '—';
-
-          return;
-        }
-
-        const mins =
-          Math.floor(
-            probe.duration / 60
-          );
-
-        const secs =
-          String(
-            Math.round(
-              probe.duration % 60
-            )
-          ).padStart(2,'0');
-
-        meta.textContent =
-          mins + ':' + secs;
-      }
-    );
-
-    probe.addEventListener(
-      'error',
-      ()=>{
-
-        meta.textContent =
-          'file not found';
-      }
-    );
-
-
-    row.appendChild(btn);
-    row.appendChild(info);
-
-
-    row.addEventListener(
-      'click',
-      ()=>{
-
-        /*
-          Selecting a song doesn't start it.
-        */
-
-        currentTrackId =
-          track.id;
-
-        document
-          .querySelectorAll('.track-row')
-          .forEach(r=>{
-
-            r.classList.toggle(
-              'selected',
-              r === row
-            );
-          });
-      }
-    );
-
-
-    wrap.appendChild(row);
-  });
-}
-
-
-/* ============================================================
-   GAME RESET / HUD
-============================================================ */
-
-function resetGame(){
-
-  score = 0;
-  lives = 3;
-
-  peppers = [];
-  leaves = [];
-
-  spawnTimer = 0;
-
-  spawnInterval = 900;
-
-  elapsed = 0;
-
-  particles = [];
-
-  boy.x = W / 2;
-  boy.y = H * GROUND_Y_RATIO;
-
-  boy.vx = 0;
-
-  updateHUD();
-}
-
-
-function updateHUD(){
-
-  scoreEl.textContent =
-    '🌶️ ' + score;
-
-  livesEl.innerHTML = '';
-
-  for(let i=0;i<3;i++){
-
-    const s =
-      document.createElement('span');
-
-    s.className =
-      'heart';
-
-    s.textContent =
-      i < lives
-      ? '💜'
-      : '🤍';
-
-    livesEl.appendChild(s);
-  }
-}
-
-
-/* ============================================================
-   KEYBOARD INPUT
-============================================================ */
-
-const keys = {};
-
-window.addEventListener(
-  'keydown',
-  e=>{
-
-    if([
-      'ArrowLeft',
-      'ArrowRight',
-      'a',
-      'd',
-      'A',
-      'D'
-    ].includes(e.key)){
-
-      e.preventDefault();
-    }
-
-    keys[e.key] = true;
-  }
-);
-
-window.addEventListener(
-  'keyup',
-  e=>{
-
-    keys[e.key] = false;
-  }
-);
-
-
-/* ============================================================
-   MOBILE TOUCH CONTROL
-============================================================ */
-
-/*
-  No joystick.
-
-  On mobile:
-  - touch/drag left  -> character moves left
-  - touch/drag right -> character moves right
-  - release          -> character stops
-
-  The finger position is compared with the boy's position.
-*/
-
-let touchActive = false;
-let touchX = null;
-
-
-function handleTouchStart(e){
-
-  if(!running) return;
-
-  if(!e.touches || !e.touches.length)
-    return;
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  touchX =
-    e.touches[0].clientX -
-    rect.left;
-
-  touchActive = true;
-
-  e.preventDefault();
-}
-
-
-function handleTouchMove(e){
-
-  if(!running || !touchActive)
-    return;
-
-  if(!e.touches || !e.touches.length)
-    return;
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  touchX =
-    e.touches[0].clientX -
-    rect.left;
-
-  e.preventDefault();
-}
-
-
-function handleTouchEnd(e){
-
-  touchActive = false;
-  touchX = null;
-
-  e.preventDefault();
-}
-
-
-canvas.addEventListener(
-  'touchstart',
-  handleTouchStart,
-  {passive:false}
-);
-
-canvas.addEventListener(
-  'touchmove',
-  handleTouchMove,
-  {passive:false}
-);
-
-canvas.addEventListener(
-  'touchend',
-  handleTouchEnd,
-  {passive:false}
-);
-
-canvas.addEventListener(
-  'touchcancel',
-  handleTouchEnd,
-  {passive:false}
-);
-
-
-/* ============================================================
-   TREE
-============================================================ */
-
-function treeX(){
-
-  return W * .5;
-}
-
-
-function treeTopY(){
-
-  return H * .06;
-}
-
-
-function branchSpawnPoints(){
-
-  const cx =
-    treeX();
-
-  const topY =
-    treeTopY();
-
-  const crownY =
-    topY + H * .16;
-
-  return [
-
-    {
-      x:cx - W*.15,
-      y:crownY - H*.02
-    },
-
-    {
-      x:cx - W*.06,
-      y:crownY - H*.07
-    },
-
-    {
-      x:cx + W*.05,
-      y:crownY - H*.06
-    },
-
-    {
-      x:cx + W*.15,
-      y:crownY - H*.01
-    },
-
-    {
-      x:cx - W*.02,
-      y:crownY + H*.03
-    }
-  ];
-}
-
-
-/* ============================================================
-   SPAWN
-============================================================ */
-
-function spawnPepper(){
-
-  const pts =
-    branchSpawnPoints();
-
-  const p =
-    pts[
-      Math.floor(
-        Math.random()*pts.length
-      )
-    ];
-
-  const c =
-    colors[
-      Math.floor(
-        Math.random()*colors.length
-      )
-    ];
-
-  peppers.push({
-
-    x:p.x,
-    y:p.y,
-
-    vy:
-      1.6 +
-      Math.random()*1.0 +
-      Math.min(
-        elapsed/40000,
-        1.4
-      ),
-
-    vx:
-      (Math.random()-.5)*.6,
-
-    rot:
-      Math.random()*Math.PI*2,
-
-    vrot:
-      (Math.random()-.5)*.08,
-
-    color:c,
-
-    size:
-      20 +
-      Math.random()*8,
-
-    wobble:
-      Math.random()*Math.PI*2
-  });
-}
-
-
-function spawnLeaf(){
-
-  const pts =
-    branchSpawnPoints();
-
-  const p =
-    pts[
-      Math.floor(
-        Math.random()*pts.length
-      )
-    ];
-
-  leaves.push({
-
-    x:p.x,
-    y:p.y,
-
-    vy:
-      1.8 +
-      Math.random()*1.0 +
-      Math.min(
-        elapsed/40000,
-        1.2
-      ),
-
-    vx:
-      (Math.random()-.5)*.7,
-
-    rot:
-      Math.random()*Math.PI*2,
-
-    vrot:
-      (Math.random()-.5)*.1,
-
-    size:
-      16 +
-      Math.random()*6,
-
-    wobble:
-      Math.random()*Math.PI*2
-  });
-}
-
-
-function spawnBurst(x,y,color){
-
-  for(let i=0;i<8;i++){
-
-    particles.push({
-
-      x:x,
-      y:y,
-
-      vx:
-        (Math.random()-.5)*4,
-
-      vy:
-        -Math.random()*3-1,
-
-      life:1,
-
-      color:color
-    });
-  }
-}
-
-
-/* ============================================================
-   BACKGROUND
-============================================================ */
-
-function drawBackground(){
-
-  ctx.clearRect(
-    0,
-    0,
-    W,
-    H
-  );
-
-  const now =
-    performance.now()/1000;
-
-
-  const g =
-    ctx.createLinearGradient(
-      0,
-      0,
-      0,
-      H
-    );
-
-  g.addColorStop(
-    0,
-    '#2f3968'
-  );
-
-  g.addColorStop(
-    .35,
-    '#4a5d8f'
-  );
-
-  g.addColorStop(
-    .68,
-    '#9a7aab'
-  );
-
-  g.addColorStop(
-    1,
-    '#e3b8a0'
-  );
-
-  ctx.fillStyle = g;
-
-  ctx.fillRect(
-    0,
-    0,
-    W,
-    H
-  );
-
-
-  /* stars */
-
-  ctx.save();
-
-  for(let i=0;i<26;i++){
-
-    const sx =
-      (i*137.5)%W;
-
-    const sy =
-      (i*71%(H*.42));
-
-    const tw =
-      .4 +
-      .6*Math.abs(
-        Math.sin(
-          now*1.6+i*2.1
-        )
-      );
-
-    ctx.globalAlpha =
-      tw *
-      (
-        1 -
-        sy/(H*.5)
-      );
-
-    ctx.fillStyle =
-      '#fff8ea';
-
-    const r =
-      i%5===0
-      ? 1.6
-      : 1;
-
-    ctx.beginPath();
-
-    ctx.arc(
-      sx,
-      sy+6,
-      r,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-  }
-
-  ctx.restore();
-
-
-  /* clouds */
-
-  ctx.save();
-
-  ctx.globalAlpha = .35;
-
-  const cloudDefs = [
-
-    {
-      sp:.006,
-      y:.12,
-      s:1
-    },
-
-    {
-      sp:.004,
-      y:.22,
-      s:.7
-    },
-
-    {
-      sp:.008,
-      y:.07,
-      s:.55
-    }
-  ];
-
-  cloudDefs.forEach((c,i)=>{
-
-    const cx =
-      (
-        now*c.sp*W*10 +
-        i*220
-      ) %
-      (W+300)
-      -150;
-
-    const cy =
-      H*c.y;
-
-    ctx.fillStyle='#fff';
-
-    [
-      [-30,0,26],
-      [0,-10,32],
-      [32,0,24],
-      [-6,8,30]
-    ].forEach(([ox,oy,r])=>{
-
-      ctx.beginPath();
-
-      ctx.arc(
-        cx+ox*c.s,
-        cy+oy*c.s,
-        r*c.s,
-        0,
-        Math.PI*2
-      );
-
-      ctx.fill();
-    });
-  });
-
-  ctx.restore();
-
-
-  /* moon / glow */
-
-  const gx =
-    W*.82;
-
-  const gy =
-    H*.16;
-
-  const glow =
-    ctx.createRadialGradient(
-      gx,
-      gy,
-      0,
-      gx,
-      gy,
-      H*.22
-    );
-
-  glow.addColorStop(
-    0,
-    'rgba(255,236,190,.9)'
-  );
-
-  glow.addColorStop(
-    1,
-    'rgba(255,236,190,0)'
-  );
-
-  ctx.fillStyle =
-    glow;
-
-  ctx.beginPath();
-
-  ctx.arc(
-    gx,
-    gy,
-    H*.22,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-
-  /* hills */
-
-  ctx.fillStyle =
-    'rgba(80,60,90,.35)';
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    0,
-    H*GROUND_Y_RATIO
-  );
-
-  ctx.quadraticCurveTo(
-    W*.2,
-    H*(GROUND_Y_RATIO-.09),
-    W*.4,
-    H*GROUND_Y_RATIO
-  );
-
-  ctx.quadraticCurveTo(
-    W*.65,
-    H*(GROUND_Y_RATIO-.12),
-    W,
-    H*(GROUND_Y_RATIO-.02)
-  );
-
-  ctx.lineTo(
-    W,
-    H*GROUND_Y_RATIO
-  );
-
-  ctx.closePath();
-
-  ctx.fill();
-
-
-  /* ground */
-
-  const gr =
-    ctx.createLinearGradient(
-      0,
-      H*GROUND_Y_RATIO,
-      0,
-      H
-    );
-
-  gr.addColorStop(
-    0,
-    '#e9d9b8'
-  );
-
-  gr.addColorStop(
-    1,
-    '#d3bd8f'
-  );
-
-  ctx.fillStyle =
-    gr;
-
-  ctx.fillRect(
-    0,
-    H*GROUND_Y_RATIO,
-    W,
-    H-H*GROUND_Y_RATIO
-  );
-
-
-  /* flowers */
-
-  for(let i=0;i<16;i++){
-
-    const dx =
-      (i*97+40)%W;
-
-    const dy =
-      H*GROUND_Y_RATIO +
-      14 +
-      (i*53%40);
-
-    if(i%4===0){
-
-      const petalColors = [
-
-        '#e85c5c',
-        '#f0d15a',
-        '#9b7ad1',
-        '#5aa7d6'
-      ];
-
-      const pc =
-        petalColors[
-          i%petalColors.length
-        ];
-
-      ctx.fillStyle = pc;
-
-      for(let k=0;k<4;k++){
-
-        const a =
-          k*Math.PI/2;
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-          dx+Math.cos(a)*3,
-          dy+Math.sin(a)*3,
-          2.4,
-          1.6,
-          a,
-          0,
-          Math.PI*2
-        );
-
-        ctx.fill();
-      }
-
-      ctx.fillStyle =
-        '#f0d15a';
-
-      ctx.beginPath();
-
-      ctx.arc(
-        dx,
-        dy,
-        1.4,
-        0,
-        Math.PI*2
-      );
-
-      ctx.fill();
-
-    }else{
-
-      ctx.fillStyle =
-        'rgba(107,74,53,.18)';
-
-      ctx.beginPath();
-
-      ctx.arc(
-        dx,
-        dy,
-        2.5,
-        0,
-        Math.PI*2
-      );
-
-      ctx.fill();
-    }
-  }
-
-
-  /* rainbow sparkles */
-
-  ctx.save();
-
-  const sparkColors = [
-
-    '#e85c5c',
-    '#f0925a',
-    '#f0d15a',
-    '#7fc36b',
-    '#5aa7d6',
-    '#9b7ad1'
-  ];
-
-  for(let i=0;i<10;i++){
-
-    const px =
-      (
-        i*211 +
-        Math.sin(now*.5+i)*30
-      )%W;
-
-    const py =
-      H*.15 +
-      (
-        now*14+i*57
-      )%(H*.55);
-
-    const a =
-      .15 +
-      .25*
-      Math.abs(
-        Math.sin(
-          now*1.1+i*1.3
-        )
-      );
-
-    ctx.globalAlpha = a;
-
-    ctx.fillStyle =
-      sparkColors[
-        i%sparkColors.length
-      ];
-
-    ctx.beginPath();
-
-    ctx.arc(
-      px,
-      py,
-      2,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
-
-/* ============================================================
-   PEPPER
-============================================================ */
-
-function drawPepperShape(
-  pctx,
-  color,
-  s
-){
-
-  pctx.fillStyle =
-    color;
-
-  pctx.beginPath();
-
-  pctx.moveTo(
-    0,
-    -s*.5
-  );
-
-  pctx.quadraticCurveTo(
-    s*.55,
-    -s*.35,
-    s*.32,
-    s*.25
-  );
-
-  pctx.quadraticCurveTo(
-    s*.15,
-    s*.6,
-    -s*.05,
-    s*.6
-  );
-
-  pctx.quadraticCurveTo(
-    -s*.35,
-    s*.4,
-    -s*.25,
-    0
-  );
-
-  pctx.quadraticCurveTo(
-    -s*.4,
-    -s*.3,
-    0,
-    -s*.5
-  );
-
-  pctx.fill();
-
-
-  pctx.fillStyle =
-    'rgba(255,255,255,.35)';
-
-  pctx.beginPath();
-
-  pctx.ellipse(
-    -s*.08,
-    -s*.1,
-    s*.09,
-    s*.16,
-    .4,
-    0,
-    Math.PI*2
-  );
-
-  pctx.fill();
-
-
-  pctx.strokeStyle =
-    '#3f5c34';
-
-  pctx.lineWidth =
-    s*.12;
-
-  pctx.beginPath();
-
-  pctx.moveTo(
-    0,
-    -s*.5
-  );
-
-  pctx.lineTo(
-    s*.06,
-    -s*.72
-  );
-
-  pctx.stroke();
-}
-
-
-function drawPepper(p){
-
-  ctx.save();
-
-  ctx.translate(
-    p.x +
-    Math.sin(p.wobble)*4,
-    p.y
-  );
-
-  ctx.rotate(
-    p.rot
-  );
-
-  drawPepperShape(
-    ctx,
-    p.color,
-    p.size
-  );
-
-  ctx.restore();
-}
-
-
-/* ============================================================
-   LEAF / POD
-============================================================ */
-
-function drawLeaf(l){
-
-  ctx.save();
-
-  ctx.translate(
-    l.x+
-    Math.sin(l.wobble)*5,
-    l.y
-  );
-
-  ctx.rotate(
-    l.rot
-  );
-
-  const s =
-    l.size;
-
-  ctx.fillStyle =
-    '#8a5a3b';
-
-  ctx.beginPath();
-
-  ctx.ellipse(
-    0,
-    0,
-    s*.55,
-    s*.28,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  ctx.fill();
-
-  ctx.strokeStyle =
-    '#5f3d26';
-
-  ctx.lineWidth = 1.5;
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    -s*.5,
-    0
-  );
-
-  ctx.lineTo(
-    s*.5,
-    0
-  );
-
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-
-/* ============================================================
-   HANGING PEPPERS
-============================================================ */
-
-function drawHangingPeppers(
-  cx,
-  crownY
-){
-
-  const pts =
-    branchSpawnPoints();
-
-  const now =
-    performance.now()/1000;
-
-  const hangColors = [
-
-    '#e85c5c',
-    '#f0925a',
-    '#f0d15a',
-    '#7fc36b',
-    '#5aa7d6',
-    '#9b7ad1'
-  ];
-
-  pts.forEach((p,i)=>{
-
-    const sway =
-      Math.sin(
-        now*1.3+i*1.7
-      )*.14;
-
-    const size =
-      15+(i%3)*3;
-
-    ctx.save();
-
-    ctx.translate(
-      p.x,
-      p.y+4
-    );
-
-    ctx.rotate(sway);
-
-    ctx.strokeStyle =
-      '#3f5c34';
-
-    ctx.lineWidth = 1.4;
-
-    ctx.beginPath();
-
-    ctx.moveTo(0,-7);
-
-    ctx.lineTo(
-      0,
-      -size*.5
-    );
-
-    ctx.stroke();
-
-    drawPepperShape(
-      ctx,
-      hangColors[
-        i%hangColors.length
-      ],
-      size
-    );
-
-    ctx.restore();
-  });
-}
-
-
-/* ============================================================
-   TREE
-============================================================ */
-
-function drawTree(){
-
-  const cx =
-    treeX();
-
-  const topY =
-    treeTopY();
-
-  const baseY =
-    H*GROUND_Y_RATIO+6;
-
-  const trunkW =
-    W*.045;
-
-
-  /* trunk */
-
-  ctx.strokeStyle =
-    '#4f3527';
-
-  ctx.fillStyle =
-    '#6b4a35';
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    cx-trunkW,
-    baseY
-  );
-
-  ctx.quadraticCurveTo(
-    cx-trunkW*1.3,
-    baseY-H*.22,
-    cx-trunkW*.5,
-    topY+H*.14
-  );
-
-  ctx.lineTo(
-    cx+trunkW*.5,
-    topY+H*.14
-  );
-
-  ctx.quadraticCurveTo(
-    cx+trunkW*1.3,
-    baseY-H*.22,
-    cx+trunkW,
-    baseY
-  );
-
-  ctx.closePath();
-
-  ctx.fill();
-
-
-  /* branches */
-
-  ctx.lineCap =
-    'round';
-
-  ctx.strokeStyle =
-    '#6b4a35';
-
-  ctx.lineWidth =
-    W*.012;
-
-  const pts =
-    branchSpawnPoints();
-
-  pts.forEach(p=>{
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      cx,
-      topY+H*.14
-    );
-
-    ctx.quadraticCurveTo(
-      (cx+p.x)/2,
-      (
-        topY+
-        H*.14+
-        p.y
-      )/2-10,
-      p.x,
-      p.y
-    );
-
-    ctx.stroke();
-  });
-
-
-  /* foliage */
-
-  const crownY =
-    topY+H*.16;
-
-  const blobs = [
-
-    {
-      dx:-.16,
-      dy:-.03,
-      r:.11,
-      c:'#4a7048'
-    },
-
-    {
-      dx:-.06,
-      dy:-.09,
-      r:.13,
-      c:'#5c8a5a'
-    },
-
-    {
-      dx:.05,
-      dy:-.08,
-      r:.13,
-      c:'#5c8a5a'
-    },
-
-    {
-      dx:.15,
-      dy:-.02,
-      r:.11,
-      c:'#4a7048'
-    },
-
-    {
-      dx:-.01,
-      dy:.02,
-      r:.14,
-      c:'#6ba367'
-    }
-  ];
-
-  blobs.forEach(b=>{
-
-    ctx.fillStyle =
-      b.c;
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      cx+W*b.dx,
-      crownY+H*b.dy,
-      W*b.r,
-      W*b.r*.78,
-      0,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-  });
-
-
-  drawHangingPeppers(
-    cx,
-    crownY
-  );
-}
-
-
-/* ============================================================
-   STAR
-============================================================ */
-
-function drawStar(
-  tctx,
-  cx,
-  cy,
-  r,
-  color
-){
+<!-- В твоём исходном коде замени функцию drawCharacter() на эту версию.
+   Остальной код можно оставить без изменений, кроме указанных ниже двух небольших изменений. -->
+
+function drawCharacter(tctx, cx, cy, skinId, walk, vx, dir){
+  const skin = SKINS[skinId] || SKINS.pioneer;
+  const bob = Math.sin(walk)*3 * (Math.abs(vx)>0.2?1:0.3);
 
   tctx.save();
+  tctx.translate(cx, cy + bob);
+  tctx.scale(dir,1);
 
-  tctx.translate(
-    cx,
-    cy
-  );
-
-  tctx.fillStyle =
-    color;
-
+  // shadow
+  tctx.fillStyle='rgba(60,40,30,0.25)';
   tctx.beginPath();
-
-  for(let i=0;i<5;i++){
-
-    const a =
-      -Math.PI/2+
-      i*(2*Math.PI/5);
-
-    const a2 =
-      a+Math.PI/5;
-
-    tctx.lineTo(
-      Math.cos(a)*r,
-      Math.sin(a)*r
-    );
-
-    tctx.lineTo(
-      Math.cos(a2)*r*.45,
-      Math.sin(a2)*r*.45
-    );
-  }
-
-  tctx.closePath();
-
+  tctx.ellipse(0, 4, 27, 8, 0, 0, Math.PI*2);
   tctx.fill();
 
-  tctx.restore();
-}
+  // legs / pants
+  tctx.fillStyle = skin.pantsColor;
+  const legSwing = Math.sin(walk)*6 * (Math.abs(vx)>0.2?1:0);
+  tctx.fillRect(-14, -34+legSwing*0.2, 10, 34);
+  tctx.fillRect(4, -34-legSwing*0.2, 10, 34);
 
-
-function roundRectStroke(
-  tctx,
-  x,
-  y,
-  w,
-  h,
-  r
-){
-
-  tctx.beginPath();
-
-  tctx.moveTo(
-    x+r,
-    y
-  );
-
-  tctx.lineTo(
-    x+w-r,
-    y
-  );
-
-  tctx.quadraticCurveTo(
-    x+w,
-    y,
-    x+w,
-    y+r
-  );
-
-  tctx.lineTo(
-    x+w,
-    y+h-r
-  );
-
-  tctx.quadraticCurveTo(
-    x+w,
-    y+h,
-    x+w-r,
-    y+h
-  );
-
-  tctx.lineTo(
-    x+r,
-    y+h
-  );
-
-  tctx.quadraticCurveTo(
-    x,
-    y+h,
-    x,
-    y+h-r
-  );
-
-  tctx.lineTo(
-    x,
-    y+r
-  );
-
-  tctx.quadraticCurveTo(
-    x,
-    y,
-    x+r,
-    y
-  );
-
-  tctx.closePath();
-
-  tctx.stroke();
-}
-
-
-/* ============================================================
-   CHARACTER
-============================================================ */
-
-function drawCharacter(
-  tctx,
-  cx,
-  cy,
-  skinId,
-  walk,
-  vx,
-  dir
-){
-
-  const skin =
-    SKINS[skinId]
-    || SKINS.pioneer;
-
-  const bob =
-    Math.sin(walk)*
-    3*
-    (
-      Math.abs(vx)>.2
-      ? 1
-      : .3
-    );
-
-  tctx.save();
-
-  tctx.translate(
-    cx,
-    cy+bob
-  );
-
-  tctx.scale(
-    dir,
-    1
-  );
-
-
-  /* shadow */
-
-  tctx.fillStyle =
-    'rgba(60,40,30,.25)';
-
-  tctx.beginPath();
-
-  tctx.ellipse(
-    0,
-    4,
-    27,
-    8,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  tctx.fill();
-
-
-  /* pants */
-
-  tctx.fillStyle =
-    skin.pantsColor;
-
-  const legSwing =
-    Math.sin(walk)*
-    6*
-    (
-      Math.abs(vx)>.2
-      ? 1
-      : 0
-    );
-
-  tctx.fillRect(
-    -14,
-    -34+legSwing*.2,
-    10,
-    34
-  );
-
-  tctx.fillRect(
-    4,
-    -34-legSwing*.2,
-    10,
-    34
-  );
-
-
-  /* ==========================================================
-     TOP
-  ========================================================== */
+  // =====================================================
+  // TOP
+  // =====================================================
 
   if(skin.top === 'turtleneck'){
 
-    tctx.fillStyle =
-      skin.topColor1;
-
+    tctx.fillStyle = skin.topColor1;
     tctx.beginPath();
-
     tctx.moveTo(-20,-72);
     tctx.lineTo(20,-72);
     tctx.lineTo(24,-30);
     tctx.lineTo(-24,-30);
-
     tctx.closePath();
-
     tctx.fill();
 
-
-    tctx.fillStyle =
-      skin.topColor2;
-
+    // turtleneck
+    tctx.fillStyle = skin.topColor2;
     tctx.beginPath();
-
     tctx.moveTo(-9,-80);
     tctx.lineTo(9,-80);
     tctx.lineTo(11,-72);
     tctx.lineTo(-11,-72);
-
     tctx.closePath();
-
     tctx.fill();
 
-  }
+  } else if(skin.top === 'trench'){
 
-  else if(skin.top === 'trench'){
-
-    /* black turtleneck */
-
-    tctx.fillStyle =
-      '#141414';
-
+    // black turtleneck underneath
+    tctx.fillStyle = '#141414';
     tctx.beginPath();
-
     tctx.moveTo(-16,-72);
     tctx.lineTo(16,-72);
     tctx.lineTo(19,-30);
     tctx.lineTo(-19,-30);
-
     tctx.closePath();
-
     tctx.fill();
 
-
-    tctx.fillStyle =
-      '#0c0c0c';
-
+    tctx.fillStyle = '#0c0c0c';
     tctx.beginPath();
-
     tctx.moveTo(-8,-84);
     tctx.lineTo(8,-84);
     tctx.lineTo(10,-72);
     tctx.lineTo(-10,-72);
-
     tctx.closePath();
-
     tctx.fill();
 
-
-    /* coat */
-
-    const tg =
-      tctx.createLinearGradient(
-        0,-74,
-        0,-14
-      );
-
-    tg.addColorStop(
-      0,
-      skin.topColor1
-    );
-
-    tg.addColorStop(
-      1,
-      skin.topColor2
-    );
+    // trench coat panels
+    const tg = tctx.createLinearGradient(0,-74,0,-14);
+    tg.addColorStop(0, skin.topColor1);
+    tg.addColorStop(1, skin.topColor2);
 
     tctx.fillStyle = tg;
 
-
     tctx.beginPath();
-
     tctx.moveTo(-20,-74);
     tctx.lineTo(-3,-74);
     tctx.lineTo(-9,-14);
     tctx.lineTo(-27,-14);
-
     tctx.closePath();
-
     tctx.fill();
 
-
     tctx.beginPath();
-
     tctx.moveTo(20,-74);
     tctx.lineTo(3,-74);
     tctx.lineTo(9,-14);
     tctx.lineTo(27,-14);
-
     tctx.closePath();
-
     tctx.fill();
 
-
-    /* lapels */
-
-    tctx.fillStyle =
-      skin.topColor2;
+    // lapels
+    tctx.fillStyle = skin.topColor2;
 
     tctx.beginPath();
-
     tctx.moveTo(-3,-74);
     tctx.lineTo(-13,-60);
     tctx.lineTo(-5,-58);
-
     tctx.closePath();
-
     tctx.fill();
 
-
     tctx.beginPath();
-
     tctx.moveTo(3,-74);
     tctx.lineTo(13,-60);
     tctx.lineTo(5,-58);
-
     tctx.closePath();
-
     tctx.fill();
 
+    // belt
+    tctx.fillStyle = skin.trimColor;
+    tctx.fillRect(-26,-30,15,3.5);
+    tctx.fillRect(11,-30,15,3.5);
 
-    /* belt */
+  } else {
 
-    tctx.fillStyle =
-      skin.trimColor;
-
-    tctx.fillRect(
-      -26,-30,
-      15,
-      3.5
-    );
-
-    tctx.fillRect(
-      11,-30,
-      15,
-      3.5
-    );
-
-  }
-
-  else{
-
-    const tg =
-      tctx.createLinearGradient(
-        0,-72,
-        0,-30
-      );
-
-    tg.addColorStop(
-      0,
-      skin.topColor1
-    );
-
-    tg.addColorStop(
-      1,
-      skin.topColor2
-    );
+    // normal shirt
+    const tg = tctx.createLinearGradient(0,-72,0,-30);
+    tg.addColorStop(0, skin.topColor1);
+    tg.addColorStop(1, skin.topColor2);
 
     tctx.fillStyle = tg;
 
     tctx.beginPath();
-
     tctx.moveTo(-20,-72);
     tctx.lineTo(20,-72);
     tctx.lineTo(24,-30);
     tctx.lineTo(-24,-30);
-
     tctx.closePath();
-
     tctx.fill();
 
-
+    // -------------------------------------------------
+    // Pioneer
+    // -------------------------------------------------
     if(skin.top === 'pioneer'){
 
-      tctx.fillStyle =
-        skin.neckerchief;
+      tctx.fillStyle = skin.neckerchief;
 
       tctx.beginPath();
-
       tctx.moveTo(0,-71);
       tctx.lineTo(-15,-52);
       tctx.lineTo(15,-52);
-
       tctx.closePath();
-
       tctx.fill();
 
-      tctx.strokeStyle =
-        'rgba(0,0,0,.12)';
-
-      tctx.lineWidth = 1;
-
+      tctx.strokeStyle='rgba(0,0,0,0.12)';
+      tctx.lineWidth=1;
       tctx.stroke();
 
-    }else{
+    }
 
-      tctx.strokeStyle =
-        skin.trimColor;
+    // -------------------------------------------------
+    // COMSOL BOSS
+    // -------------------------------------------------
+    else if(skinId === 'greenshirt'){
 
-      tctx.lineWidth = 2.5;
+      // shirt details
+      tctx.strokeStyle = skin.trimColor;
+      tctx.lineWidth = 2;
 
       tctx.beginPath();
-
       tctx.moveTo(-22,-50);
       tctx.lineTo(22,-50);
-
       tctx.stroke();
 
+      // large COMSOL logo
+      tctx.save();
 
-      tctx.setLineDash([
-        3,
-        4
-      ]);
+      tctx.fillStyle = '#f7f3e7';
+      tctx.font = '700 7px "Baloo 2", sans-serif';
+      tctx.textAlign = 'center';
+      tctx.textBaseline = 'middle';
+
+      // small rounded white logo background
+      tctx.fillStyle = 'rgba(250,248,238,0.95)';
+      tctx.beginPath();
+      tctx.roundRect(-19,-46,38,17,3);
+      tctx.fill();
+
+      // brain icon
+      tctx.font = '8px sans-serif';
+      tctx.fillStyle = '#33241c';
+      tctx.fillText('🧠', -11,-37.5);
+
+      // COMSOL text
+      tctx.font = '800 6.5px "Baloo 2", sans-serif';
+      tctx.fillStyle = '#33241c';
+      tctx.fillText('COMSOL', 6,-37.5);
+
+      tctx.restore();
+
+      // lower shirt seam
+      tctx.strokeStyle = skin.trimColor;
+      tctx.lineWidth = 1.5;
 
       tctx.beginPath();
+      tctx.moveTo(-22,-30);
+      tctx.lineTo(22,-30);
+      tctx.stroke();
 
+    }
+
+    // -------------------------------------------------
+    // Other shirts
+    // -------------------------------------------------
+    else {
+
+      tctx.strokeStyle = skin.trimColor;
+      tctx.lineWidth=2.5;
+
+      tctx.beginPath();
+      tctx.moveTo(-22,-50);
+      tctx.lineTo(22,-50);
+      tctx.stroke();
+
+      tctx.setLineDash([3,4]);
+
+      tctx.beginPath();
       tctx.moveTo(-23,-40);
       tctx.lineTo(23,-40);
-
       tctx.stroke();
 
       tctx.setLineDash([]);
     }
-
-
-    if(skin.pocketProtector){
-
-      tctx.fillStyle =
-        '#f4f0e6';
-
-      tctx.fillRect(
-        2,-68,
-        7,
-        9
-      );
-
-      tctx.strokeStyle =
-        '#cfc9b8';
-
-      tctx.lineWidth=.7;
-
-      tctx.strokeRect(
-        2,-68,
-        7,
-        9
-      );
-
-
-      const penColors = [
-        '#e85c5c',
-        '#5aa7d6',
-        '#3a2416'
-      ];
-
-      penColors.forEach(
-        (c,i)=>{
-
-          tctx.strokeStyle =
-            c;
-
-          tctx.lineWidth = 1.3;
-
-          tctx.lineCap =
-            'round';
-
-          tctx.beginPath();
-
-          tctx.moveTo(
-            3.3+i*1.7,
-            -68
-          );
-
-          tctx.lineTo(
-            3.3+i*1.7,
-            -73
-          );
-
-          tctx.stroke();
-        }
-      );
-
-
-      /* ID badge */
-
-      tctx.fillStyle =
-        '#e8e2d0';
-
-      tctx.fillRect(
-        -11,-68,
-        7,
-        9
-      );
-
-      tctx.strokeStyle =
-        '#b7ae94';
-
-      tctx.lineWidth=.7;
-
-      tctx.strokeRect(
-        -11,-68,
-        7,
-        9
-      );
-
-      tctx.font =
-        '6px sans-serif';
-
-      tctx.textAlign =
-        'center';
-
-      tctx.textBaseline =
-        'middle';
-
-      tctx.fillText(
-        '🧠',
-        -7.5,
-        -63.5
-      );
-    }
   }
 
+  // =====================================================
+  // ARMS
+  // =====================================================
 
-  /* ==========================================================
-     ARMS
-  ========================================================== */
-
-  const armSwing =
-    Math.sin(walk+Math.PI)*
-    8*
-    (
-      Math.abs(vx)>.2
-      ? 1
-      : 0
-    );
-
+  const armSwing = Math.sin(walk+Math.PI)*8 *
+                   (Math.abs(vx)>0.2?1:0);
 
   if(skin.sleeve === 'short'){
 
-    tctx.strokeStyle =
-      skin.topColor1;
-
-    tctx.lineWidth = 9;
-
-    tctx.lineCap =
-      'round';
+    tctx.strokeStyle = skin.topColor1;
+    tctx.lineWidth=9;
+    tctx.lineCap='round';
 
     tctx.beginPath();
-
-    tctx.moveTo(
-      -20,-66
-    );
-
-    tctx.lineTo(
-      -25,-58
-    );
-
+    tctx.moveTo(-20,-66);
+    tctx.lineTo(-25,-58);
     tctx.stroke();
 
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      20,-66
-    );
-
-    tctx.lineTo(
-      25,-58
-    );
-
+    tctx.moveTo(20,-66);
+    tctx.lineTo(25,-58);
     tctx.stroke();
 
-
-    tctx.strokeStyle =
-      '#e8b98a';
-
-    tctx.lineWidth = 7;
+    // skin
+    tctx.strokeStyle='#e8b98a';
+    tctx.lineWidth=7;
 
     tctx.beginPath();
-
-    tctx.moveTo(
-      -25,-58
-    );
-
-    tctx.lineTo(
-      -30,
-      -45+armSwing*.3
-    );
-
+    tctx.moveTo(-25,-58);
+    tctx.lineTo(-30,-45+armSwing*0.3);
     tctx.stroke();
 
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      25,-58
-    );
-
-    tctx.lineTo(
-      30,
-      -45-armSwing*.3
-    );
-
+    tctx.moveTo(25,-58);
+    tctx.lineTo(30,-45-armSwing*0.3);
     tctx.stroke();
 
-  }else{
+  } else {
 
-    tctx.strokeStyle =
-      skin.topColor1;
-
-    tctx.lineWidth = 9;
-
-    tctx.lineCap =
-      'round';
+    tctx.strokeStyle = skin.topColor1;
+    tctx.lineWidth=9;
+    tctx.lineCap='round';
 
     tctx.beginPath();
-
-    tctx.moveTo(
-      -20,-66
-    );
-
-    tctx.lineTo(
-      -30,
-      -45+armSwing*.3
-    );
-
+    tctx.moveTo(-20,-66);
+    tctx.lineTo(-30,-45+armSwing*0.3);
     tctx.stroke();
 
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      20,-66
-    );
-
-    tctx.lineTo(
-      30,
-      -45-armSwing*.3
-    );
-
+    tctx.moveTo(20,-66);
+    tctx.lineTo(30,-45-armSwing*0.3);
     tctx.stroke();
   }
 
-
-  /* ==========================================================
-     GUITAR
-  ========================================================== */
+  // =====================================================
+  // GUITAR
+  // =====================================================
 
   if(skin.accessory === 'guitar'){
 
     tctx.save();
+    tctx.translate(-24,-46);
+    tctx.rotate(-0.3);
 
-    tctx.translate(
-      -24,
-      -46
-    );
-
-    tctx.rotate(-.3);
-
-    tctx.fillStyle =
-      '#8a5a3b';
+    tctx.fillStyle='#8a5a3b';
 
     tctx.beginPath();
-
-    tctx.ellipse(
-      0,
-      11,
-      9,
-      13,
-      0,
-      0,
-      Math.PI*2
-    );
-
+    tctx.ellipse(0,11,9,13,0,0,Math.PI*2);
     tctx.fill();
 
-
     tctx.beginPath();
-
-    tctx.ellipse(
-      0,
-      -6,
-      6.5,
-      8,
-      0,
-      0,
-      Math.PI*2
-    );
-
+    tctx.ellipse(0,-6,6.5,8,0,0,Math.PI*2);
     tctx.fill();
 
-
-    tctx.fillStyle =
-      '#3f2a1a';
-
+    tctx.fillStyle='#3f2a1a';
     tctx.beginPath();
-
-    tctx.arc(
-      0,
-      11,
-      3.2,
-      0,
-      Math.PI*2
-    );
-
+    tctx.arc(0,11,3.2,0,Math.PI*2);
     tctx.fill();
 
+    tctx.fillStyle='#5f3d26';
+    tctx.fillRect(-1.6,-29,3.2,25);
 
-    tctx.fillStyle =
-      '#5f3d26';
+    tctx.fillStyle='#4a3320';
+    tctx.fillRect(-3.4,-34,6.8,6);
 
-    tctx.fillRect(
-      -1.6,
-      -29,
-      3.2,
-      25
-    );
-
-
-    tctx.fillStyle =
-      '#4a3320';
-
-    tctx.fillRect(
-      -3.4,
-      -34,
-      6.8,
-      6
-    );
-
-
-    tctx.strokeStyle =
-      'rgba(255,255,255,.55)';
-
-    tctx.lineWidth=.6;
+    tctx.strokeStyle='rgba(255,255,255,0.55)';
+    tctx.lineWidth=0.6;
 
     tctx.beginPath();
-
     tctx.moveTo(-1,-29);
     tctx.lineTo(-1,19);
-
     tctx.stroke();
-
 
     tctx.beginPath();
-
     tctx.moveTo(1,-29);
     tctx.lineTo(1,19);
-
     tctx.stroke();
-
 
     tctx.restore();
   }
 
+  // =====================================================
+  // BASKET
+  // =====================================================
 
-  /* ==========================================================
-     BASKET
-  ========================================================== */
-
-  tctx.fillStyle =
-    '#8a5a3b';
+  tctx.fillStyle='#8a5a3b';
 
   tctx.beginPath();
-
-  tctx.moveTo(
-    -14,-42
-  );
-
-  tctx.lineTo(
-    14,-42
-  );
-
-  tctx.lineTo(
-    11,-28
-  );
-
-  tctx.lineTo(
-    -11,-28
-  );
-
+  tctx.moveTo(-14,-42);
+  tctx.lineTo(14,-42);
+  tctx.lineTo(11,-28);
+  tctx.lineTo(-11,-28);
   tctx.closePath();
-
   tctx.fill();
 
-
-  tctx.strokeStyle =
-    '#5f3d26';
-
+  tctx.strokeStyle='#5f3d26';
   tctx.lineWidth=1.5;
 
   for(let i=-10;i<=10;i+=5){
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      i,
-      -42
-    );
-
-    tctx.lineTo(
-      i*.8,
-      -28
-    );
-
+    tctx.moveTo(i,-42);
+    tctx.lineTo(i*0.8,-28);
     tctx.stroke();
   }
 
-
   tctx.beginPath();
-
-  tctx.moveTo(
-    -12,-42
-  );
-
-  tctx.quadraticCurveTo(
-    0,-52,
-    12,-42
-  );
-
+  tctx.moveTo(-12,-42);
+  tctx.quadraticCurveTo(0,-52,12,-42);
   tctx.stroke();
 
+  // =====================================================
+  // NECK + HEAD
+  // =====================================================
 
-  /* ==========================================================
-     NECK + HEAD
-  ========================================================== */
+  tctx.fillStyle='#e8b98a';
+  tctx.fillRect(-5,-78,10,10);
 
-  tctx.fillStyle =
-    '#e8b98a';
+  // =====================================================
+  // HAIR — возвращаем именно стиль первого кода:
+  // НЕ супер длинные, но заметно волнистые
+  // =====================================================
 
-  tctx.fillRect(
-    -5,
-    -78,
-    10,
-    10
-  );
-
-
-  /* ==========================================================
-     HAIR BACK
-
-     IMPORTANT:
-     Original first-code wave style.
-     Not super long.
-  ========================================================== */
-
-  tctx.fillStyle =
-    skin.hair;
-
+  tctx.fillStyle = skin.hair;
 
   if(skin.hairStyle === 'bob'){
 
     tctx.beginPath();
-
     tctx.moveTo(-17,-85);
-
-    tctx.quadraticCurveTo(
-      -20,-76,
-      -19,-68
-    );
-
-    tctx.lineTo(
-      -13,-68
-    );
-
-    tctx.quadraticCurveTo(
-      -15,-78,
-      -13,-84
-    );
-
+    tctx.quadraticCurveTo(-20,-76,-19,-68);
+    tctx.lineTo(-13,-68);
+    tctx.quadraticCurveTo(-15,-78,-13,-84);
     tctx.closePath();
-
     tctx.fill();
 
-
     tctx.beginPath();
-
     tctx.moveTo(17,-85);
-
-    tctx.quadraticCurveTo(
-      20,-76,
-      19,-68
-    );
-
-    tctx.lineTo(
-      13,-68
-    );
-
-    tctx.quadraticCurveTo(
-      15,-78,
-      13,-84
-    );
-
+    tctx.quadraticCurveTo(20,-76,19,-68);
+    tctx.lineTo(13,-68);
+    tctx.quadraticCurveTo(15,-78,13,-84);
     tctx.closePath();
-
     tctx.fill();
 
-  }
+  } else if(skin.hairStyle === 'extra-wavy'){
 
-
-  /*
-    ORIGINAL WAVY HAIR
-
-    The hair reaches only around
-    shoulder/upper body level,
-    not all the way down.
-  */
-
-  else if(
-    skin.hairStyle === 'extra-wavy'
-  ){
-
-    /* left side */
-
+    // именно оригинальная форма волос
     tctx.beginPath();
-
-    tctx.moveTo(
-      -16,-84
-    );
+    tctx.moveTo(-16,-84);
 
     tctx.bezierCurveTo(
       -29,-76,
@@ -3575,17 +418,10 @@ function drawCharacter(
     );
 
     tctx.closePath();
-
     tctx.fill();
 
-
-    /* right side */
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      16,-84
-    );
+    tctx.moveTo(16,-84);
 
     tctx.bezierCurveTo(
       29,-76,
@@ -3612,21 +448,15 @@ function drawCharacter(
     );
 
     tctx.closePath();
-
     tctx.fill();
-  }
 
+  } else if(skin.hairStyle === 'extra-wavy-short'){
 
-  else if(
-    skin.hairStyle ===
-    'extra-wavy-short'
-  ){
-
+    // короткие, но волнистые волосы
+    // не длиннее плеч
     tctx.beginPath();
 
-    tctx.moveTo(
-      -16,-84
-    );
+    tctx.moveTo(-16,-84);
 
     tctx.bezierCurveTo(
       -25,-80,
@@ -3653,15 +483,11 @@ function drawCharacter(
     );
 
     tctx.closePath();
-
     tctx.fill();
-
 
     tctx.beginPath();
 
-    tctx.moveTo(
-      16,-84
-    );
+    tctx.moveTo(16,-84);
 
     tctx.bezierCurveTo(
       25,-80,
@@ -3688,18 +514,12 @@ function drawCharacter(
     );
 
     tctx.closePath();
-
     tctx.fill();
-  }
 
-
-  else{
+  } else {
 
     tctx.beginPath();
-
-    tctx.moveTo(
-      -16,-84
-    );
+    tctx.moveTo(-16,-84);
 
     tctx.bezierCurveTo(
       -26,-70,
@@ -3714,15 +534,10 @@ function drawCharacter(
     );
 
     tctx.closePath();
-
     tctx.fill();
 
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      16,-84
-    );
+    tctx.moveTo(16,-84);
 
     tctx.bezierCurveTo(
       26,-70,
@@ -3737,1073 +552,222 @@ function drawCharacter(
     );
 
     tctx.closePath();
-
     tctx.fill();
   }
 
+  // =====================================================
+  // HEAD
+  // =====================================================
 
-  /* ==========================================================
-     HEAD
-  ========================================================== */
-
-  tctx.fillStyle =
-    '#f0c99a';
+  tctx.fillStyle='#f0c99a';
 
   tctx.beginPath();
-
-  tctx.arc(
-    0,
-    -92,
-    16,
-    0,
-    Math.PI*2
-  );
-
+  tctx.arc(0,-92,16,0,Math.PI*2);
   tctx.fill();
 
-
-  /* hair top */
-
-  tctx.fillStyle =
-    skin.hair;
+  // hair top
+  tctx.fillStyle = skin.hair;
 
   tctx.beginPath();
-
-  tctx.arc(
-    0,
-    -96,
-    17,
-    Math.PI*1.05,
-    Math.PI*1.95
-  );
-
+  tctx.arc(0,-96,17,Math.PI*1.05,Math.PI*1.95);
   tctx.fill();
-
 
   if(skin.hairStyle === 'bob'){
 
     tctx.beginPath();
-
-    tctx.moveTo(
-      -15,
-      -99
-    );
-
-    tctx.lineTo(
-      15,
-      -99
-    );
-
-    tctx.lineTo(
-      14,
-      -93
-    );
-
-    tctx.lineTo(
-      -14,
-      -93
-    );
-
+    tctx.moveTo(-15,-99);
+    tctx.lineTo(15,-99);
+    tctx.lineTo(14,-93);
+    tctx.lineTo(-14,-93);
     tctx.closePath();
-
     tctx.fill();
 
-  }
+  } else if(skin.hairStyle === 'extra-wavy-short'){
 
-
-  else if(
-    skin.hairStyle ===
-    'extra-wavy-short'
-  ){
-
+    // side-swept fringe
     tctx.beginPath();
 
-    tctx.moveTo(
-      -15,-100
-    );
-
-    tctx.quadraticCurveTo(
-      -5,-107,
-      5,-101
-    );
-
-    tctx.quadraticCurveTo(
-      -1,-95,
-      -9,-94
-    );
-
-    tctx.quadraticCurveTo(
-      -13,-96,
-      -15,-100
-    );
+    tctx.moveTo(-15,-100);
+    tctx.quadraticCurveTo(-5,-107,5,-101);
+    tctx.quadraticCurveTo(-1,-95,-9,-94);
+    tctx.quadraticCurveTo(-13,-96,-15,-100);
 
     tctx.closePath();
-
     tctx.fill();
   }
 
+  // =====================================================
+  // HEADWEAR
+  // =====================================================
 
-  /* headwear */
+  if(skin.headwear === 'headband'){
 
-  if(
-    skin.headwear ===
-    'headband'
-  ){
+    tctx.fillStyle = skin.headwearColor;
+    tctx.fillRect(-16,-101,32,5);
 
-    tctx.fillStyle =
-      skin.headwearColor;
-
-    tctx.fillRect(
-      -16,
-      -101,
-      32,
-      5
-    );
-
-    tctx.fillStyle =
-      '#e0a63a';
+    tctx.fillStyle = '#e0a63a';
 
     tctx.beginPath();
-
-    tctx.arc(
-      -16,
-      -98,
-      2.4,
-      0,
-      Math.PI*2
-    );
-
+    tctx.arc(-16,-98,2.4,0,Math.PI*2);
     tctx.fill();
 
+  } else if(skin.headwear === 'star'){
+
+    drawStar(tctx,-8,-103,5,skin.headwearColor);
   }
 
+  // =====================================================
+  // GLASSES
+  // =====================================================
 
-  else if(
-    skin.headwear ===
-    'star'
-  ){
+  if(skin.glasses === 'big-square'){
 
-    drawStar(
-      tctx,
-      -8,
-      -103,
-      5,
-      skin.headwearColor
-    );
-  }
-
-
-  /* glasses */
-
-  if(
-    skin.glasses ===
-    'big-square'
-  ){
-
-    tctx.strokeStyle =
-      skin.glassesColor;
-
+    tctx.strokeStyle = skin.glassesColor;
     tctx.lineWidth=3;
 
-    roundRectStroke(
-      tctx,
-      -15,
-      -97,
-      13,
-      12,
-      2
-    );
-
-    roundRectStroke(
-      tctx,
-      2,
-      -97,
-      13,
-      12,
-      2
-    );
+    roundRectStroke(tctx,-15,-97,13,12,2);
+    roundRectStroke(tctx,2,-97,13,12,2);
 
     tctx.beginPath();
-
-    tctx.moveTo(
-      -2,
-      -91
-    );
-
-    tctx.lineTo(
-      2,
-      -91
-    );
-
+    tctx.moveTo(-2,-91);
+    tctx.lineTo(2,-91);
     tctx.stroke();
 
-  }
+  } else {
 
-  else{
-
-    tctx.strokeStyle =
-      skin.glassesColor;
-
+    tctx.strokeStyle = skin.glassesColor;
     tctx.lineWidth=2;
 
     tctx.beginPath();
-
-    tctx.arc(
-      -7,
-      -91,
-      6,
-      0,
-      Math.PI*2
-    );
-
+    tctx.arc(-7,-91,6,0,Math.PI*2);
     tctx.stroke();
 
-
     tctx.beginPath();
-
-    tctx.arc(
-      7,
-      -91,
-      6,
-      0,
-      Math.PI*2
-    );
-
+    tctx.arc(7,-91,6,0,Math.PI*2);
     tctx.stroke();
 
-
     tctx.beginPath();
-
-    tctx.moveTo(
-      -1,
-      -91
-    );
-
-    tctx.lineTo(
-      1,
-      -91
-    );
-
+    tctx.moveTo(-1,-91);
+    tctx.lineTo(1,-91);
     tctx.stroke();
   }
 
-
-  /* smile */
-
-  tctx.strokeStyle =
-    '#8a4a30';
-
+  // smile
+  tctx.strokeStyle='#8a4a30';
   tctx.lineWidth=1.6;
 
   tctx.beginPath();
-
-  tctx.arc(
-    0,
-    -86,
-    4,
-    .15*Math.PI,
-    .85*Math.PI
-  );
-
+  tctx.arc(0,-86,4,0.15*Math.PI,0.85*Math.PI);
   tctx.stroke();
-
 
   tctx.restore();
 }
+```
 
+### И ещё 2 изменения
 
-function drawBoy(){
+**1. Удали старое управление джойстиками на мобильном.**
 
-  drawCharacter(
-    ctx,
-    boy.x,
-    boy.y,
-    currentSkin,
-    boy.walk,
-    boy.vx,
-    boy.dir
-  );
-}
+Из HTML удали:
 
+```html
+<div id="touch-controls">
+  <button id="btnLeft">◀</button>
+  <button id="btnRight">▶</button>
+</div>
+```
 
-/* ============================================================
-   SKIN THUMBNAILS
-============================================================ */
+И можешь полностью удалить CSS:
 
-function renderSkinThumbnails(){
+```css
+#touch-controls { ... }
+#touch-controls button { ... }
+@media (pointer:coarse) { ... }
+```
 
-  document
-    .querySelectorAll('.skin-option')
-    .forEach(btn=>{
+А также удалить JavaScript-блок:
 
-      const skinId =
-        btn.dataset.skin;
+```js
+let touchLeft=false, touchRight=false;
+const btnLeft = document.getElementById('btnLeft');
+const btnRight = document.getElementById('btnRight');
 
-      const cvs =
-        btn.querySelector('canvas');
+function bindHold(...) { ... }
 
-      const tctx =
-        cvs.getContext('2d');
+bindHold(...);
+```
 
-      tctx.clearRect(
-        0,
-        0,
-        cvs.width,
-        cvs.height
-      );
+**2. Добавь управление пальцем.**
 
-      drawCharacter(
-        tctx,
-        cvs.width/2,
-        cvs.height-8,
-        skinId,
-        0,
-        0,
-        1
-      );
+Вместо старого touch-control JavaScript вставь:
 
-      if(
-        skinId === currentSkin
-      ){
+```js
+// ---------- mobile touch control ----------
+let touchActive = false;
+let touchTargetX = null;
 
-        btn.classList.add(
-          'selected'
-        );
-      }
+stage.addEventListener('touchstart', e => {
+  if(!running) return;
 
+  const touch = e.touches[0];
+  const rect = stage.getBoundingClientRect();
 
-      btn.addEventListener(
-        'click',
-        ()=>{
+  touchTargetX = touch.clientX - rect.left;
+  touchActive = true;
 
-          currentSkin =
-            skinId;
+  e.preventDefault();
+}, {passive:false});
 
-          document
-            .querySelectorAll(
-              '.skin-option'
-            )
-            .forEach(b=>{
+stage.addEventListener('touchmove', e => {
+  if(!running || !touchActive) return;
 
-              b.classList.toggle(
-                'selected',
-                b === btn
-              );
-            });
+  const touch = e.touches[0];
+  const rect = stage.getBoundingClientRect();
 
+  touchTargetX = touch.clientX - rect.left;
 
-          if(!running){
+  e.preventDefault();
+}, {passive:false});
 
-            drawBackground();
-            drawTree();
-            drawBoy();
-          }
-        }
-      );
-    });
-}
-
-
-/* ============================================================
-   PARTICLES
-============================================================ */
-
-function drawParticles(){
-
-  particles.forEach(p=>{
-
-    ctx.globalAlpha =
-      Math.max(
-        p.life,
-        0
-      );
-
-    ctx.fillStyle =
-      p.color;
-
-    ctx.beginPath();
-
-    ctx.arc(
-      p.x,
-      p.y,
-      3,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-  });
-
-  ctx.globalAlpha=1;
-}
-
-
-/* ============================================================
-   UPDATE
-============================================================ */
-
-function update(dt){
-
-  elapsed += dt;
-
-
-  /* ==========================================================
-     MOVEMENT
-  ========================================================== */
-
-  let move = 0;
-
-
-  /* keyboard */
-
-  if(
-    keys['ArrowLeft'] ||
-    keys['a'] ||
-    keys['A']
-  ){
-
-    move -= 1;
-  }
-
-
-  if(
-    keys['ArrowRight'] ||
-    keys['d'] ||
-    keys['D']
-  ){
-
-    move += 1;
-  }
-
-
-  /* mobile finger */
-
-  if(
-    touchActive &&
-    touchX !== null
-  ){
-
-    const difference =
-      touchX - boy.x;
-
-    /*
-      Small dead-zone so the character
-      doesn't shake when finger is near him.
-    */
-
-    const deadZone = 12;
-
-    if(
-      difference < -deadZone
-    ){
-
-      move = -1;
-
-    }else if(
-      difference > deadZone
-    ){
-
-      move = 1;
-
-    }else{
-
-      move = 0;
-    }
-  }
-
-
-  boy.vx =
-    move * boy.speed;
-
-  if(move !== 0){
-
-    boy.dir =
-      move > 0
-      ? 1
-      : -1;
-  }
-
-
-  boy.x +=
-    boy.vx;
-
-
-  boy.x =
-    Math.max(
-      boy.w*.5+10,
-      Math.min(
-        W-boy.w*.5-10,
-        boy.x
-      )
-    );
-
-
-  boy.walk +=
-    Math.abs(boy.vx)*.05+
-    .02;
-
-
-  /* ==========================================================
-     SPAWN
-  ========================================================== */
-
-  spawnTimer += dt;
-
-  spawnInterval =
-    Math.max(
-      420,
-      900 -
-      elapsed/1000*6
-    );
-
-
-  if(
-    spawnTimer >
-    spawnInterval
-  ){
-
-    spawnTimer = 0;
-
-    if(
-      Math.random()<.78
-    ){
-
-      spawnPepper();
-
-    }else{
-
-      spawnLeaf();
-    }
-  }
-
-
-  const catchY =
-    boy.y-40;
-
-  const catchXRange =
-    34;
-
-
-  /* ==========================================================
-     MOVE PEPPERS
-  ========================================================== */
-
-  peppers.forEach(p=>{
-
-    p.y += p.vy;
-
-    p.x += p.vx;
-
-    p.rot += p.vrot;
-
-    p.wobble += .06;
-  });
-
-
-  leaves.forEach(l=>{
-
-    l.y += l.vy;
-
-    l.x += l.vx;
-
-    l.rot += l.vrot;
-
-    l.wobble += .06;
-  });
-
-
-  /* ==========================================================
-     PEPPERS
-  ========================================================== */
-
-  for(
-    let i=peppers.length-1;
-    i>=0;
-    i--
-  ){
-
-    const p =
-      peppers[i];
-
-
-    if(
-      p.y >
-      catchY-16 &&
-      p.y <
-      catchY+16 &&
-      Math.abs(
-        p.x-boy.x
-      ) <
-      catchXRange
-    ){
-
-      score += 1;
-
-      spawnBurst(
-        p.x,
-        p.y,
-        p.color
-      );
-
-      peppers.splice(
-        i,
-        1
-      );
-
-      updateHUD();
-
-      continue;
-    }
-
-
-    if(
-      p.y >
-      H*GROUND_Y_RATIO+10
-    ){
-
-      peppers.splice(
-        i,
-        1
-      );
-    }
-  }
-
-
-  /* ==========================================================
-     BAD PODS
-  ========================================================== */
-
-  for(
-    let i=leaves.length-1;
-    i>=0;
-    i--
-  ){
-
-    const l =
-      leaves[i];
-
-
-    if(
-      l.y >
-      catchY-16 &&
-      l.y <
-      catchY+16 &&
-      Math.abs(
-        l.x-boy.x
-      ) <
-      catchXRange
-    ){
-
-      lives -= 1;
-
-      spawnBurst(
-        l.x,
-        l.y,
-        '#8a5a3b'
-      );
-
-      leaves.splice(
-        i,
-        1
-      );
-
-      updateHUD();
-
-
-      if(lives<=0){
-
-        endGame(false);
-
-        return;
-      }
-
-      continue;
-    }
-
-
-    if(
-      l.y >
-      H*GROUND_Y_RATIO+10
-    ){
-
-      leaves.splice(
-        i,
-        1
-      );
-    }
-  }
-
-
-  /* ==========================================================
-     PARTICLES
-  ========================================================== */
-
-  particles.forEach(p=>{
-
-    p.x += p.vx;
-
-    p.y += p.vy;
-
-    p.vy += .15;
-
-    p.life -= .03;
-  });
-
-
-  particles =
-    particles.filter(
-      p=>p.life>0
-    );
-}
-
-
-/* ============================================================
-   END GAME
-============================================================ */
-
-function endGame(won){
-
-  running = false;
-
+stage.addEventListener('touchend', e => {
   touchActive = false;
-  touchX = null;
-
-  boy.vx = 0;
-
-  stopMusic();
-
-  songProgressWrap
-    .classList
-    .remove('visible');
-
-
-  if(won){
-
-    endTitleEl.textContent =
-      'Track Complete! 🎶';
-
-    finalScoreText.textContent =
-      'You survived to the end of the song! ' +
-      'Peppers collected: ' +
-      score +
-      ' 🌶️';
-
-  }else{
-
-    endTitleEl.textContent =
-      'Harvest Complete!';
-
-    finalScoreText.textContent =
-      'Peppers collected: ' +
-      score +
-      ' 🌶️';
-  }
-
-
-  endScreen
-    .classList
-    .remove('hidden');
-}
-
-
-/* ============================================================
-   GAME LOOP
-============================================================ */
-
-let lastT = null;
-
-
-function loop(t){
-
-  if(!running){
-
-    lastT = null;
-
-    return;
-  }
-
-
-  if(lastT === null){
-
-    lastT = t;
-  }
-
-
-  const dt =
-    Math.min(
-      t-lastT,
-      40
-    );
-
-
-  lastT = t;
-
-
-  update(dt);
-
-
-  if(!running){
-
-    return;
-  }
-
-
-  drawBackground();
-
-  drawTree();
-
-  leaves.forEach(
-    drawLeaf
-  );
-
-  peppers.forEach(
-    drawPepper
-  );
-
-  drawBoy();
-
-  drawParticles();
-
-
-  /* music progress */
-
-  if(
-    songPlaying &&
-    currentAudio &&
-    currentAudio.duration
-  ){
-
-    const prog =
-      Math.min(
-        1,
-        currentAudio.currentTime /
-        currentAudio.duration
-      );
-
-    songProgressBar.style.width =
-      (prog*100)+'%';
-  }
-
-
-  requestAnimationFrame(
-    loop
-  );
-}
-
-
-/* ============================================================
-   START GAME
-============================================================ */
-
-function startGame(){
-
-  resize();
-
-  resetGame();
-
-  startScreen
-    .classList
-    .add('hidden');
-
-  endScreen
-    .classList
-    .add('hidden');
-
-  running = true;
-
-  songProgressBar.style.width =
-    '0%';
-
-  songProgressWrap
-    .classList
-    .add('visible');
-
-  playTrack(
-    currentTrackId,
-    ()=>{
-      if(running){
-
-        endGame(true);
-      }
-    }
-  );
-
-  requestAnimationFrame(
-    loop
-  );
-}
-
-
-/* ============================================================
-   STOP BUTTON
-============================================================ */
-
-btnStop.addEventListener(
-  'click',
-  ()=>{
-
-    if(!running)
-      return;
-
-    running = false;
-
-    touchActive = false;
-    touchX = null;
-
-    boy.vx = 0;
-
-    stopMusic();
-
-    songProgressWrap
-      .classList
-      .remove('visible');
-
-    endTitleEl.textContent =
-      'Game Paused';
-
-    finalScoreText.textContent =
-      'Peppers collected: ' +
-      score +
-      ' 🌶️';
-
-    endScreen
-      .classList
-      .remove('hidden');
-  }
-);
-
-
-/* ============================================================
-   MAIN MENU
-============================================================ */
-
-btnMenu.addEventListener(
-  'click',
-  ()=>{
-    goToMainMenu();
-  }
-);
-
-
-function goToMainMenu(){
-
-  running = false;
-
+  touchTargetX = null;
+  e.preventDefault();
+}, {passive:false});
+
+stage.addEventListener('touchcancel', e => {
   touchActive = false;
-  touchX = null;
+  touchTargetX = null;
+});
+```
 
-  boy.vx = 0;
+И в `update(dt)` после блока:
 
-  stopMusic();
+```js
+let move = 0;
 
-  songProgressWrap
-    .classList
-    .remove('visible');
+if(keys['ArrowLeft']||keys['a']||keys['A']) move -= 1;
+if(keys['ArrowRight']||keys['d']||keys['D']) move += 1;
+```
 
-  endScreen
-    .classList
-    .add('hidden');
+сделай:
 
-  startScreen
-    .classList
-    .remove('hidden');
+```js
+let move = 0;
 
-  resize();
+// PC
+if(keys['ArrowLeft']||keys['a']||keys['A']) move -= 1;
+if(keys['ArrowRight']||keys['d']||keys['D']) move += 1;
 
-  boy.x =
-    W/2;
+// MOBILE
+if(touchActive && touchTargetX !== null){
 
-  boy.y =
-    H*GROUND_Y_RATIO;
+  const difference = touchTargetX - boy.x;
 
-  drawBackground();
-
-  drawTree();
-
-  drawBoy();
+  if(Math.abs(difference) > 8){
+    move = difference > 0 ? 1 : -1;
+  }
 }
 
-
-/* ============================================================
-   START BUTTON
-============================================================ */
-
-document
-  .getElementById('btnStart')
-  .addEventListener(
-    'click',
-    startGame
-  );
-
-
-/* ============================================================
-   PLAY AGAIN
-============================================================ */
-
-document
-  .getElementById('btnRestart')
-  .addEventListener(
-    'click',
-    ()=>{
-
-      endScreen
-        .classList
-        .add('hidden');
-
-      startScreen
-        .classList
-        .remove('hidden');
-
-      resize();
-
-      boy.x =
-        W/2;
-
-      boy.y =
-        H*GROUND_Y_RATIO;
-
-      drawBackground();
-
-      drawTree();
-
-      drawBoy();
-    }
-  );
-
-
-/* ============================================================
-   INITIAL FRAME
-============================================================ */
-
-resize();
-
-boy.x =
-  W/2;
-
-boy.y =
-  H*GROUND_Y_RATIO;
-
-drawBackground();
-
-drawTree();
-
-drawBoy();
-
-renderSkinThumbnails();
-
-renderMusicList();
-
-
-/*
-  IMPORTANT:
-  No music starts here.
-
-  Music only starts after pressing Play.
-*/
-
-})();
-</script>
-
-</body>
-</html>
+boy.vx = move * boy.speed;
 ```

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>Biberchik: Rainbow Pepper Harvest</title>
 
 <style>
@@ -33,6 +34,7 @@
 
   *{
     box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
   }
 
   html,
@@ -52,11 +54,11 @@
         var(--sky-bottom) 70%
       );
 
-    overscroll-behavior:none;
+    touch-action:none;
   }
 
   body{
-    touch-action:none;
+    overscroll-behavior:none;
   }
 
   #wrap{
@@ -67,6 +69,8 @@
     display:flex;
     align-items:center;
     justify-content:center;
+
+    overflow:hidden;
   }
 
   #stage{
@@ -102,9 +106,7 @@
     touch-action:none;
   }
 
-  /* =========================================================
-     HUD
-     ========================================================= */
+  /* ---------------- HUD ---------------- */
 
   #hud{
     position:absolute;
@@ -114,7 +116,7 @@
     right:14px;
 
     display:flex;
-    justify-content:space-between;
+    justify-content:flex-end;
     align-items:flex-start;
 
     font-family:'Baloo 2',sans-serif;
@@ -148,6 +150,8 @@
 
     padding:8px 14px;
 
+    margin-left:8px;
+
     border-radius:999px;
   }
 
@@ -160,75 +164,53 @@
       );
   }
 
-  /* =========================================================
-     GAME CONTROLS
-     ========================================================= */
+  /* ---------------- MUSIC PROGRESS ---------------- */
 
-  #game-controls{
+  #songProgressWrap{
     position:absolute;
 
-    top:14px;
-    left:50%;
+    top:0;
+    left:0;
+    right:0;
 
-    transform:translateX(-50%);
+    height:5px;
 
-    display:flex;
-    gap:7px;
+    background:rgba(0,0,0,0.22);
 
-    z-index:7;
+    z-index:6;
+
+    opacity:0;
+
+    transition:opacity .3s ease;
   }
 
-  .game-control{
-    border:none;
-
-    font-family:'Baloo 2',sans-serif;
-
-    font-size:13px;
-    font-weight:700;
-
-    color:#fff4e0;
-
-    background:rgba(51,36,28,0.55);
-
-    padding:7px 13px;
-
-    border-radius:999px;
-
-    cursor:pointer;
-
-    backdrop-filter:blur(3px);
-
-    transition:
-      background .15s ease,
-      transform .1s ease;
+  #songProgressWrap.visible{
+    opacity:1;
   }
 
-  .game-control:hover{
-    background:rgba(51,36,28,0.75);
+  #songProgressBar{
+    height:100%;
+    width:0%;
+
+    background:
+      linear-gradient(
+        90deg,
+        var(--r1),
+        var(--r3),
+        var(--r5)
+      );
   }
 
-  .game-control:active{
-    transform:translateY(2px);
-  }
-
-  #btnGameStop{
-    color:#ffe4dd;
-  }
-
-  #btnGameMenu{
-    color:#f6e7c2;
-  }
-
-  /* =========================================================
-     OVERLAYS
-     ========================================================= */
+  /* ---------------- OVERLAYS ---------------- */
 
   .overlay{
     position:absolute;
+
     inset:0;
 
     display:flex;
     flex-direction:column;
+
     align-items:center;
     justify-content:center;
 
@@ -246,6 +228,10 @@
     z-index:10;
 
     padding:24px;
+
+    overflow-y:auto;
+
+    touch-action:auto;
   }
 
   .overlay h1{
@@ -264,7 +250,7 @@
   .overlay p{
     font-size:clamp(14px,2vw,17px);
 
-    max-width:620px;
+    max-width:520px;
 
     line-height:1.5;
 
@@ -349,9 +335,7 @@
     display:none !important;
   }
 
-  /* =========================================================
-     SKINS
-     ========================================================= */
+  /* ---------------- SKINS ---------------- */
 
   .skin-select{
     display:flex;
@@ -379,7 +363,9 @@
     cursor:pointer;
 
     display:flex;
+
     flex-direction:column;
+
     align-items:center;
 
     gap:5px;
@@ -404,7 +390,7 @@
 
     display:block;
 
-    position:static;
+    position:relative;
   }
 
   .skin-option:hover{
@@ -420,16 +406,13 @@
     transform:translateY(-2px);
   }
 
-  /* =========================================================
-     MUSIC SELECTOR
-     ========================================================= */
+  /* ---------------- MUSIC ---------------- */
 
   .music-select{
     width:100%;
-    max-width:700px;
+    max-width:650px;
 
-    height:190px;
-    max-height:190px;
+    max-height:210px;
 
     overflow-y:auto;
 
@@ -437,12 +420,9 @@
 
     padding:7px;
 
-    background:
-      rgba(0,0,0,0.18);
+    background:rgba(0,0,0,0.18);
 
     border-radius:14px;
-
-    overscroll-behavior:contain;
 
     touch-action:pan-y;
   }
@@ -454,7 +434,7 @@
 
     gap:10px;
 
-    padding:8px 10px;
+    padding:7px 9px;
 
     border-radius:10px;
 
@@ -462,8 +442,7 @@
 
     margin-bottom:5px;
 
-    background:
-      rgba(255,255,255,0.05);
+    background:rgba(255,255,255,0.05);
 
     border:2px solid transparent;
 
@@ -477,8 +456,7 @@
   }
 
   .track-row:hover{
-    background:
-      rgba(255,255,255,0.11);
+    background:rgba(255,255,255,0.11);
   }
 
   .track-row.selected{
@@ -510,6 +488,8 @@
     line-height:30px;
 
     padding:0;
+
+    touch-action:manipulation;
   }
 
   .track-row .preview-btn.playing{
@@ -546,98 +526,132 @@
     color:#d8c9e6;
   }
 
-  /* =========================================================
-     SONG PROGRESS
-     ========================================================= */
+  /* ---------------- GAME BUTTONS ---------------- */
 
-  #songProgressWrap{
-    position:absolute;
-
-    top:0;
-    left:0;
-    right:0;
-
-    height:5px;
-
-    background:
-      rgba(0,0,0,0.22);
-
-    z-index:6;
-
-    opacity:0;
-
-    transition:
-      opacity .3s ease;
-  }
-
-  #songProgressWrap.visible{
-    opacity:1;
-  }
-
-  #songProgressBar{
-    height:100%;
-
-    width:0%;
-
-    background:
-      linear-gradient(
-        90deg,
-        var(--r1),
-        var(--r3),
-        var(--r5)
-      );
-  }
-
-  /* =========================================================
-     MOBILE INFO
-     ========================================================= */
-
-  #mobile-hint{
-    display:none;
-
+  #game-controls{
     position:absolute;
 
     left:50%;
-    bottom:15px;
+    bottom:14px;
 
     transform:translateX(-50%);
 
-    z-index:6;
+    display:none;
 
-    padding:7px 13px;
+    gap:10px;
 
-    border-radius:999px;
+    z-index:7;
+  }
 
-    background:
-      rgba(51,36,28,0.48);
+  .game-btn{
+    font-family:'Baloo 2',sans-serif;
+
+    font-size:14px;
+    font-weight:700;
 
     color:#fff4e0;
 
-    font-family:'Baloo 2',sans-serif;
+    background:
+      rgba(51,36,28,0.65);
 
-    font-size:12px;
+    border:
+      1px solid rgba(255,255,255,0.15);
 
-    white-space:nowrap;
+    padding:8px 16px;
 
-    pointer-events:none;
+    border-radius:999px;
 
-    opacity:.85;
+    cursor:pointer;
+
+    backdrop-filter:blur(3px);
+
+    touch-action:manipulation;
   }
 
-  /* =========================================================
-     MOBILE ADAPTATION
-     ========================================================= */
+  .game-btn:active{
+    transform:scale(.96);
+  }
 
-  @media (max-width: 700px){
+  #stopGameBtn{
+    background:
+      rgba(120,50,45,0.78);
+  }
 
-    html,
-    body{
-      overflow:hidden;
-    }
+  /* ---------------- MOBILE ---------------- */
+
+  @media (max-width:700px){
 
     #stage{
       width:100vw;
       height:100vh;
+    }
+
+    .overlay{
+      padding:
+        20px
+        14px
+        24px;
+    }
+
+    .overlay h1{
+      font-size:
+        clamp(
+          25px,
+          8vw,
+          38px
+        );
+    }
+
+    .overlay p{
+      font-size:14px;
+
+      max-width:
+        min(94vw,520px);
+    }
+
+    .skin-select{
+      gap:7px;
+
+      max-width:100%;
+    }
+
+    .skin-option{
+      padding:
+        5px
+        7px
+        5px;
+
+      border-radius:12px;
+
+      font-size:10px;
+    }
+
+    .skin-option canvas{
+      width:47px;
+      height:68px;
+    }
+
+    .music-select{
+      width:96vw;
+
+      max-width:none;
+
+      max-height:190px;
+    }
+
+    .track-row{
+      padding:
+        8px 8px;
+    }
+
+    .track-name{
+      font-size:13px;
+    }
+
+    .hint{
+      font-size:11px;
+
+      gap:7px;
     }
 
     #hud{
@@ -647,183 +661,65 @@
     }
 
     #score{
-      padding:6px 12px;
       font-size:16px;
+
+      padding:
+        6px 12px;
     }
 
     #lives{
-      padding:6px 10px;
-      gap:4px;
+      padding:
+        6px 10px;
     }
 
     .heart{
-      font-size:16px;
+      font-size:15px;
     }
 
     #game-controls{
-      top:auto;
-      bottom:12px;
-      left:50%;
-
-      transform:translateX(-50%);
-
-      gap:6px;
+      display:flex;
     }
 
-    .game-control{
-      font-size:11px;
-
-      padding:6px 11px;
-    }
-
-    #mobile-hint{
-      display:block;
-      bottom:58px;
-    }
-
-    .overlay{
-      padding:
-        16px
-        14px
-        18px;
-    }
-
-    .overlay h1{
-      font-size:
-        clamp(25px,8vw,36px);
-
-      line-height:1.05;
-
-      margin-bottom:8px;
-    }
-
-    .overlay p{
+    .game-btn{
       font-size:13px;
 
-      max-width:92%;
-
-      line-height:1.4;
-
-      margin:
-        5px 0
-        12px;
-    }
-
-    .skin-select{
-      gap:6px;
-
-      margin:
-        2px 0
-        10px;
-    }
-
-    .skin-option{
       padding:
-        5px 6px 5px;
-
-      border-radius:12px;
-
-      font-size:10px;
-    }
-
-    .skin-option canvas{
-      width:45px;
-      height:65px;
-    }
-
-    .music-select{
-      max-width:96%;
-
-      height:155px;
-      max-height:155px;
-
-      margin-bottom:11px;
-    }
-
-    .track-row{
-      padding:7px 8px;
-
-      gap:8px;
-    }
-
-    .track-name{
-      font-size:12px;
-    }
-
-    .track-meta{
-      font-size:10px;
-    }
-
-    button.play{
-      font-size:17px;
-
-      padding:
-        10px 28px;
-    }
-
-    .hint{
-      margin-top:9px;
-
-      font-size:10px;
-
-      gap:7px;
+        7px 13px;
     }
   }
 
-  @media (max-width: 430px){
+  /* Very small phones */
 
-    .skin-select{
-      max-width:340px;
-    }
-
-    .skin-option{
-      padding:
-        4px 5px;
-    }
-
-    .skin-option canvas{
-      width:40px;
-      height:58px;
-    }
-
-    .music-select{
-      height:140px;
-      max-height:140px;
-    }
-
-    .overlay p{
-      max-width:96%;
-    }
-  }
-
-  @media (orientation:landscape) and (max-width:700px){
+  @media (max-height:650px){
 
     .overlay{
       justify-content:flex-start;
 
-      overflow-y:auto;
-
-      padding-top:8px;
-      padding-bottom:8px;
-
-      touch-action:pan-y;
+      padding-top:12px;
     }
 
     .overlay h1{
-      font-size:25px;
+      margin-bottom:2px;
+    }
+
+    .overlay p{
+      margin:
+        3px 0 8px;
     }
 
     .skin-select{
-      margin-bottom:6px;
+      margin:
+        2px 0 8px;
     }
 
     .music-select{
-      height:105px;
-      max-height:105px;
+      max-height:125px;
+
+      margin-bottom:8px;
     }
 
     .hint{
-      display:none;
+      margin-top:8px;
     }
   }
 </style>
@@ -838,6 +734,7 @@
     <canvas id="game"></canvas>
 
     <!-- HUD -->
+
     <div id="hud">
 
       <div id="score">
@@ -849,31 +746,33 @@
     </div>
 
     <!-- GAME BUTTONS -->
-    <div id="game-controls" class="hidden">
+
+    <div id="game-controls">
 
       <button
-        class="game-control"
-        id="btnGameStop"
-        type="button">
-        ■ Stop
+        class="game-btn"
+        id="stopGameBtn"
+        type="button"
+      >
+        ⏹ Stop
       </button>
 
       <button
-        class="game-control"
-        id="btnGameMenu"
-        type="button">
-        ☰ Main Menu
+        class="game-btn"
+        id="mainMenuBtn"
+        type="button"
+      >
+        🏠 Main Menu
       </button>
 
-    </div>
-
-    <!-- MOBILE HINT -->
-    <div id="mobile-hint">
-      👆 Drag your finger to move
     </div>
 
     <!-- START SCREEN -->
-    <div class="overlay" id="startScreen">
+
+    <div
+      class="overlay"
+      id="startScreen"
+    >
 
       <h1>
         Biberchik<br>
@@ -885,102 +784,113 @@
 
       <p>
         A curly-haired boy in round glasses has come out under
-        the old biberchik tree — rainbow-colored peppers are
-        falling from it. Catch them in your basket, but watch
-        out for the prickly brown pods!
+        the old biberchik tree — rainbow-colored peppers are falling
+        from it. Catch them in your basket, but watch out for the
+        prickly brown pods!
       </p>
 
       <!-- SKINS -->
-      <div class="skin-select" id="skinSelect">
+
+      <div
+        class="skin-select"
+        id="skinSelect"
+      >
 
         <button
           class="skin-option"
           data-skin="pioneer"
-          type="button">
-
+          type="button"
+        >
           <canvas
             width="90"
-            height="130">
-          </canvas>
+            height="130"
+          ></canvas>
 
-          <span>Pioneer</span>
-
+          <span>
+            Pioneer
+          </span>
         </button>
 
         <button
           class="skin-option"
           data-skin="whitewig"
-          type="button">
-
+          type="button"
+        >
           <canvas
             width="90"
-            height="130">
-          </canvas>
+            height="130"
+          ></canvas>
 
-          <span>Ongo</span>
-
+          <span>
+            Ongo
+          </span>
         </button>
 
         <button
           class="skin-option"
           data-skin="greenshirt"
-          type="button">
-
+          type="button"
+        >
           <canvas
             width="90"
-            height="130">
-          </canvas>
+            height="130"
+          ></canvas>
 
-          <span>Comsol Boss</span>
-
+          <span>
+            Comsol Boss
+          </span>
         </button>
 
         <button
           class="skin-option"
           data-skin="guitarist"
-          type="button">
-
+          type="button"
+        >
           <canvas
             width="90"
-            height="130">
-          </canvas>
+            height="130"
+          ></canvas>
 
-          <span>Ukulele Boss</span>
-
+          <span>
+            Ukulele Boss
+          </span>
         </button>
 
         <button
           class="skin-option"
           data-skin="trench"
-          type="button">
-
+          type="button"
+        >
           <canvas
             width="90"
-            height="130">
-          </canvas>
+            height="130"
+          ></canvas>
 
-          <span>Winter Edition</span>
-
+          <span>
+            Winter Edition
+          </span>
         </button>
 
       </div>
 
       <!-- MUSIC -->
+
       <div
         class="music-select"
-        id="musicSelect">
-      </div>
+        id="musicSelect"
+      ></div>
 
       <button
         class="play"
-        id="btnStart">
+        id="btnStart"
+      >
         Play
       </button>
 
       <div class="hint">
 
         <span>
-          ⌨️ ← → to move
+          💻 ← → to move
         </span>
 
         <span>
@@ -996,9 +906,11 @@
     </div>
 
     <!-- END SCREEN -->
+
     <div
       class="overlay hidden"
-      id="endScreen">
+      id="endScreen"
+    >
 
       <h1 id="endTitle">
         Harvest Complete!
@@ -1008,18 +920,23 @@
 
       <button
         class="play"
-        id="btnRestart">
+        id="btnRestart"
+      >
         Play Again
       </button>
 
     </div>
 
     <!-- SONG PROGRESS -->
+
     <div id="songProgressWrap">
+
       <div id="songProgressBar"></div>
+
     </div>
 
   </div>
+
 </div>
 
 
@@ -1028,8 +945,8 @@
 (function(){
 
   /* =========================================================
-     ELEMENTS
-     ========================================================= */
+     BASIC ELEMENTS
+  ========================================================= */
 
   const stage =
     document.getElementById('stage');
@@ -1064,20 +981,21 @@
   const songProgressBar =
     document.getElementById('songProgressBar');
 
-  const gameControls =
-    document.getElementById('game-controls');
+  const stopGameBtn =
+    document.getElementById('stopGameBtn');
 
-  const mobileHint =
-    document.getElementById('mobile-hint');
+  const mainMenuBtn =
+    document.getElementById('mainMenuBtn');
+
 
 
   /* =========================================================
      CANVAS SIZE
-     ========================================================= */
+  ========================================================= */
 
-  let W;
-  let H;
-  let DPR;
+  let W = 0;
+  let H = 0;
+  let DPR = 1;
 
   function resize(){
 
@@ -1107,6 +1025,7 @@
       0,
       0
     );
+
   }
 
   window.addEventListener(
@@ -1114,14 +1033,14 @@
     resize
   );
 
-  resize();
 
 
   /* =========================================================
      GAME STATE
-     ========================================================= */
+  ========================================================= */
 
-  const GROUND_Y_RATIO = 0.78;
+  const GROUND_Y_RATIO =
+    0.78;
 
   let running = false;
 
@@ -1133,18 +1052,19 @@
 
   let leaves = [];
 
+  let particles = [];
+
   let spawnTimer = 0;
 
   let spawnInterval = 900;
 
   let elapsed = 0;
 
-  let particles = [];
 
 
   /* =========================================================
      BOY
-     ========================================================= */
+  ========================================================= */
 
   const boy = {
 
@@ -1167,9 +1087,10 @@
   };
 
 
+
   /* =========================================================
      COLORS
-     ========================================================= */
+  ========================================================= */
 
   const colors = [
 
@@ -1183,13 +1104,14 @@
   ];
 
 
+
   /* =========================================================
      SKINS
-     ========================================================= */
+  ========================================================= */
 
   const SKINS = {
 
-    pioneer:{
+    pioneer: {
 
       name:'Pioneer',
 
@@ -1222,7 +1144,7 @@
     },
 
 
-    whitewig:{
+    whitewig: {
 
       name:'Ongo',
 
@@ -1253,17 +1175,11 @@
     },
 
 
-    greenshirt:{
+    greenshirt: {
 
       name:'Comsol Boss',
 
       hair:'#3f2b1a',
-
-      /*
-       * IMPORTANT:
-       * medium-length wavy hair,
-       * like the original code
-       */
 
       hairStyle:'extra-wavy-short',
 
@@ -1292,7 +1208,7 @@
     },
 
 
-    guitarist:{
+    guitarist: {
 
       name:'Ukulele Boss',
 
@@ -1325,7 +1241,7 @@
     },
 
 
-    trench:{
+    trench: {
 
       name:'Winter Edition',
 
@@ -1362,9 +1278,10 @@
     'pioneer';
 
 
+
   /* =========================================================
      MUSIC
-     ========================================================= */
+  ========================================================= */
 
   const TRACKS = [
 
@@ -1472,9 +1389,10 @@
   let songPlaying = false;
 
 
+
   /* =========================================================
      MUSIC STOP
-     ========================================================= */
+  ========================================================= */
 
   function stopMusic(){
 
@@ -1484,11 +1402,12 @@
 
       currentAudio.pause();
 
+      currentAudio.currentTime = 0;
+
       currentAudio.onended = null;
 
-      currentAudio.onerror = null;
-
       currentAudio = null;
+
     }
 
     if(previewAudio){
@@ -1497,11 +1416,8 @@
 
       previewAudio.currentTime = 0;
 
-      previewAudio.onended = null;
-
-      previewAudio.onerror = null;
-
       previewAudio = null;
+
     }
 
     document
@@ -1517,12 +1433,14 @@
         btn.textContent = '▶';
 
       });
+
   }
 
 
+
   /* =========================================================
-     PLAY FULL TRACK
-     ========================================================= */
+     PLAY GAME TRACK
+  ========================================================= */
 
   function playTrack(
     trackId,
@@ -1531,28 +1449,19 @@
 
     const track =
       TRACKS.find(
-        t => t.id === trackId
+        t=>t.id===trackId
       ) || TRACKS[0];
 
     stopMusic();
 
     const audio =
-      new Audio();
+      new Audio(track.file);
 
-    audio.src =
-      track.file;
-
-    audio.preload =
-      'auto';
-
-    audio.volume =
-      0.8;
+    audio.volume = 0.8;
 
     audio.onended = ()=>{
 
-      if(
-        currentAudio === audio
-      ){
+      if(currentAudio === audio){
 
         songPlaying = false;
 
@@ -1562,159 +1471,104 @@
 
     };
 
-    audio.onerror = ()=>{
+    currentAudio = audio;
 
-      console.warn(
-        'Could not play:',
-        track.file
-      );
+    songPlaying = true;
 
-    };
-
-    currentAudio =
-      audio;
-
-    songPlaying =
-      true;
-
-    /*
-     * This happens after pressing Play,
-     * so browser autoplay restrictions
-     * are satisfied.
-     */
-
-    audio.play().catch(
-      err => {
+    audio.play()
+      .catch(err=>{
 
         console.warn(
-          'Audio playback blocked:',
+          'Audio could not start:',
           err
         );
 
-      }
-    );
+      });
+
   }
 
 
+
   /* =========================================================
-     PREVIEW
-     *
-     * IMPORTANT:
-     * Preview no longer stops after 6 seconds.
-     * It plays until the track ends or
-     * another preview is selected.
-     * ========================================================= */
+     MUSIC PREVIEW
+     NOW PLAYS UNTIL STOPPED
+  ========================================================= */
 
   function previewTrack(
     trackId,
     btn
   ){
 
-    const isPlaying =
+    const alreadyPlaying =
       btn.classList.contains(
         'playing'
       );
 
     stopMusic();
 
-    if(isPlaying){
+    if(alreadyPlaying){
 
       return;
+
     }
 
     const track =
       TRACKS.find(
-        t => t.id === trackId
+        t=>t.id===trackId
       );
 
     if(!track){
+
       return;
+
     }
 
     const audio =
-      new Audio();
+      new Audio(track.file);
 
-    audio.src =
-      track.file;
+    audio.volume = 0.8;
 
-    audio.preload =
-      'auto';
+    previewAudio = audio;
 
-    audio.volume =
-      0.8;
+    audio.play()
+      .catch(err=>{
 
-    previewAudio =
-      audio;
+        console.warn(
+          'Preview could not start:',
+          err
+        );
+
+      });
 
     btn.classList.add(
       'playing'
     );
 
-    btn.textContent =
-      '■';
+    btn.textContent = '■';
 
     audio.onended = ()=>{
 
-      if(
-        previewAudio === audio
-      ){
+      if(previewAudio === audio){
+
+        btn.classList.remove(
+          'playing'
+        );
+
+        btn.textContent = '▶';
 
         previewAudio = null;
 
-        btn.classList.remove(
-          'playing'
-        );
-
-        btn.textContent =
-          '▶';
-
       }
 
     };
 
-    audio.onerror = ()=>{
-
-      btn.classList.remove(
-        'playing'
-      );
-
-      btn.textContent =
-        '▶';
-
-      if(
-        previewAudio === audio
-      ){
-
-        previewAudio =
-          null;
-
-      }
-
-    };
-
-    audio.play().catch(
-      err => {
-
-        console.warn(
-          'Preview could not play:',
-          err
-        );
-
-        btn.classList.remove(
-          'playing'
-        );
-
-        btn.textContent =
-          '▶';
-
-      }
-    );
   }
+
 
 
   /* =========================================================
      MUSIC LIST
-     ========================================================= */
+  ========================================================= */
 
   function renderMusicList(){
 
@@ -1795,27 +1649,22 @@
         track.name;
 
 
-      const metaSpan =
+      const meta =
         document.createElement(
           'div'
         );
 
-      metaSpan.className =
+      meta.className =
         'track-meta';
 
-      metaSpan.textContent =
-        'Loading...';
+      meta.textContent =
+        'loading...';
 
 
       info.appendChild(name);
 
-      info.appendChild(metaSpan);
+      info.appendChild(meta);
 
-
-      /*
-       * Metadata only.
-       * We do not play the file here.
-       */
 
       const probe =
         new Audio();
@@ -1825,6 +1674,7 @@
 
       probe.src =
         track.file;
+
 
       probe.addEventListener(
         'loadedmetadata',
@@ -1851,7 +1701,7 @@
                 '0'
               );
 
-            metaSpan.textContent =
+            meta.textContent =
               mins + ':' + secs;
 
           }
@@ -1859,11 +1709,12 @@
         }
       );
 
+
       probe.addEventListener(
         'error',
         ()=>{
 
-          metaSpan.textContent =
+          meta.textContent =
             'file not found';
 
         }
@@ -1879,6 +1730,8 @@
         'click',
         ()=>{
 
+          stopMusic();
+
           currentTrackId =
             track.id;
 
@@ -1886,14 +1739,14 @@
             .querySelectorAll(
               '.track-row'
             )
-            .forEach(r=>{
-
-              r.classList.toggle(
-                'selected',
-                r === row
-              );
-
-            });
+            .forEach(
+              r=>{
+                r.classList.toggle(
+                  'selected',
+                  r === row
+                );
+              }
+            );
 
         }
       );
@@ -1902,12 +1755,14 @@
       wrap.appendChild(row);
 
     });
+
   }
+
 
 
   /* =========================================================
      RESET GAME
-     ========================================================= */
+  ========================================================= */
 
   function resetGame(){
 
@@ -1919,13 +1774,13 @@
 
     leaves = [];
 
+    particles = [];
+
     spawnTimer = 0;
 
     spawnInterval = 900;
 
     elapsed = 0;
-
-    particles = [];
 
     boy.x =
       W / 2;
@@ -1935,21 +1790,24 @@
 
     boy.vx = 0;
 
+    boy.walk = 0;
+
     updateHUD();
+
   }
+
 
 
   /* =========================================================
      HUD
-     ========================================================= */
+  ========================================================= */
 
   function updateHUD(){
 
     scoreEl.textContent =
       '🌶️ ' + score;
 
-    livesEl.innerHTML =
-      '';
+    livesEl.innerHTML = '';
 
     for(
       let i=0;
@@ -1973,12 +1831,14 @@
       livesEl.appendChild(s);
 
     }
+
   }
 
 
+
   /* =========================================================
-     KEYBOARD INPUT
-     ========================================================= */
+     KEYBOARD CONTROL
+  ========================================================= */
 
   const keys = {};
 
@@ -1987,21 +1847,22 @@
     'keydown',
     e=>{
 
-      if([
-        'ArrowLeft',
-        'ArrowRight',
-        'a',
-        'd',
-        'A',
-        'D'
-      ].includes(e.key)){
+      if(
+        [
+          'ArrowLeft',
+          'ArrowRight',
+          'a',
+          'd',
+          'A',
+          'D'
+        ].includes(e.key)
+      ){
 
         e.preventDefault();
 
       }
 
-      keys[e.key] =
-        true;
+      keys[e.key] = true;
 
     }
   );
@@ -2011,149 +1872,203 @@
     'keyup',
     e=>{
 
-      keys[e.key] =
-        false;
+      keys[e.key] = false;
 
     }
   );
 
 
+
   /* =========================================================
-     MOBILE TOUCH CONTROL
-     *
-     * No joystick.
-     *
-     * The player simply drags a finger
-     * left/right across the game screen.
-     * ========================================================= */
+     MOBILE FINGER CONTROL
+     
+     IMPORTANT:
+     No joystick.
+     
+     Put finger anywhere on game canvas,
+     move finger left/right,
+     boy follows finger.
+  ========================================================= */
 
-  let touchActive =
-    false;
+  let touchActive = false;
 
-  let touchX =
-    W / 2;
+  let touchX = 0;
 
 
   function updateTouchPosition(
-    clientX
+    e
   ){
 
+    if(!running){
+
+      return;
+
+    }
+
+    const touch =
+      e.touches
+        ? e.touches[0]
+        : e;
+
+    if(!touch){
+
+      return;
+
+    }
+
     const rect =
-      stage.getBoundingClientRect();
+      canvas.getBoundingClientRect();
 
     touchX =
-      clientX -
+      touch.clientX -
       rect.left;
-
-    touchX =
-      Math.max(
-        0,
-        Math.min(
-          W,
-          touchX
-        )
-      );
 
   }
 
 
-  stage.addEventListener(
+  canvas.addEventListener(
     'touchstart',
     e=>{
 
-      if(!running){
+      e.preventDefault();
+
+      touchActive = true;
+
+      updateTouchPosition(e);
+
+    },
+    {
+      passive:false
+    }
+  );
+
+
+  canvas.addEventListener(
+    'touchmove',
+    e=>{
+
+      e.preventDefault();
+
+      if(!touchActive){
+
         return;
+
       }
 
-      /*
-       * Ignore touches on buttons.
-       */
+      updateTouchPosition(e);
+
+    },
+    {
+      passive:false
+    }
+  );
+
+
+  canvas.addEventListener(
+    'touchend',
+    e=>{
+
+      e.preventDefault();
+
+      touchActive = false;
+
+    },
+    {
+      passive:false
+    }
+  );
+
+
+  canvas.addEventListener(
+    'touchcancel',
+    e=>{
+
+      e.preventDefault();
+
+      touchActive = false;
+
+    },
+    {
+      passive:false
+    }
+  );
+
+
+
+  /* =========================================================
+     POINTER SUPPORT
+     
+     This also makes the game work with:
+     mouse
+     stylus
+     some mobile browsers
+  ========================================================= */
+
+  canvas.addEventListener(
+    'pointerdown',
+    e=>{
+
+      if(e.pointerType === 'mouse'){
+
+        return;
+
+      }
+
+      touchActive = true;
+
+      const rect =
+        canvas.getBoundingClientRect();
+
+      touchX =
+        e.clientX -
+        rect.left;
+
+    }
+  );
+
+
+  canvas.addEventListener(
+    'pointermove',
+    e=>{
 
       if(
-        e.target.closest(
-          'button'
-        )
+        !touchActive ||
+        e.pointerType === 'mouse'
       ){
 
         return;
 
       }
 
-      touchActive =
-        true;
+      const rect =
+        canvas.getBoundingClientRect();
 
-      const touch =
-        e.touches[0];
+      touchX =
+        e.clientX -
+        rect.left;
 
-      updateTouchPosition(
-        touch.clientX
-      );
-
-      e.preventDefault();
-
-    },
-    {
-      passive:false
     }
   );
 
 
-  stage.addEventListener(
-    'touchmove',
+  canvas.addEventListener(
+    'pointerup',
     e=>{
 
-      if(!running){
-        return;
+      if(e.pointerType !== 'mouse'){
+
+        touchActive = false;
+
       }
 
-      if(!touchActive){
-        return;
-      }
-
-      const touch =
-        e.touches[0];
-
-      updateTouchPosition(
-        touch.clientX
-      );
-
-      e.preventDefault();
-
-    },
-    {
-      passive:false
     }
   );
 
-
-  stage.addEventListener(
-    'touchend',
-    e=>{
-
-      touchActive =
-        false;
-
-      e.preventDefault();
-
-    },
-    {
-      passive:false
-    }
-  );
-
-
-  stage.addEventListener(
-    'touchcancel',
-    ()=>{
-      touchActive =
-        false;
-    }
-  );
 
 
   /* =========================================================
      TREE GEOMETRY
-     ========================================================= */
+  ========================================================= */
 
   function treeX(){
 
@@ -2180,6 +2095,7 @@
     const crownY =
       topY +
       H * 0.16;
+
 
     return [
 
@@ -2234,12 +2150,14 @@
       }
 
     ];
+
   }
+
 
 
   /* =========================================================
      SPAWN PEPPER
-     ========================================================= */
+  ========================================================= */
 
   function spawnPepper(){
 
@@ -2262,6 +2180,7 @@
         )
       ];
 
+
     peppers.push({
 
       x:p.x,
@@ -2270,15 +2189,16 @@
 
       vy:
         1.6 +
-        Math.random() * 1.0 +
+        Math.random() *
+        1.0 +
         Math.min(
           elapsed / 40000,
           1.4
         ),
 
       vx:
-        (Math.random()-0.5)
-        * 0.6,
+        (Math.random()-0.5) *
+        0.6,
 
       rot:
         Math.random() *
@@ -2286,8 +2206,8 @@
         2,
 
       vrot:
-        (Math.random()-0.5)
-        * 0.08,
+        (Math.random()-0.5) *
+        0.08,
 
       color:c,
 
@@ -2302,12 +2222,14 @@
         2
 
     });
+
   }
 
 
+
   /* =========================================================
-     SPAWN LEAF
-     ========================================================= */
+     SPAWN BAD POD
+  ========================================================= */
 
   function spawnLeaf(){
 
@@ -2322,6 +2244,7 @@
         )
       ];
 
+
     leaves.push({
 
       x:p.x,
@@ -2330,15 +2253,16 @@
 
       vy:
         1.8 +
-        Math.random() * 1.0 +
+        Math.random() *
+        1.0 +
         Math.min(
           elapsed / 40000,
           1.2
         ),
 
       vx:
-        (Math.random()-0.5)
-        * 0.7,
+        (Math.random()-0.5) *
+        0.7,
 
       rot:
         Math.random() *
@@ -2346,8 +2270,8 @@
         2,
 
       vrot:
-        (Math.random()-0.5)
-        * 0.1,
+        (Math.random()-0.5) *
+        0.1,
 
       size:
         16 +
@@ -2360,12 +2284,14 @@
         2
 
     });
+
   }
+
 
 
   /* =========================================================
      PARTICLES
-     ========================================================= */
+  ========================================================= */
 
   function spawnBurst(
     x,
@@ -2386,12 +2312,11 @@
         y:y,
 
         vx:
-          (Math.random()-0.5)
-          * 4,
+          (Math.random()-0.5) *
+          4,
 
         vy:
-          -Math.random()*3
-          -1,
+          -Math.random()*3-1,
 
         life:1,
 
@@ -2404,9 +2329,10 @@
   }
 
 
+
   /* =========================================================
      BACKGROUND
-     ========================================================= */
+  ========================================================= */
 
   function drawBackground(){
 
@@ -2417,13 +2343,10 @@
       H
     );
 
+
     const now =
-      performance.now() / 1000;
+      performance.now()/1000;
 
-
-    /*
-     * Sky
-     */
 
     const g =
       ctx.createLinearGradient(
@@ -2453,6 +2376,7 @@
       '#e3b8a0'
     );
 
+
     ctx.fillStyle =
       g;
 
@@ -2464,9 +2388,7 @@
     );
 
 
-    /*
-     * Stars
-     */
+    /* STARS */
 
     ctx.save();
 
@@ -2477,47 +2399,46 @@
     ){
 
       const sx =
-        (i * 137.5) %
-        W;
+        (i*137.5) % W;
 
       const sy =
-        (i * 71 %
-        (H * 0.42));
+        (i*71 % (H*0.42));
 
       const tw =
         0.4 +
         0.6 *
         Math.abs(
           Math.sin(
-            now * 1.6 +
-            i * 2.1
+            now*1.6+i*2.1
           )
         );
+
 
       ctx.globalAlpha =
         tw *
         (
           1 -
-          sy /
-          (H * 0.5)
+          sy/(H*0.5)
         );
 
       ctx.fillStyle =
         '#fff8ea';
 
+
       const r =
-        i % 5 === 0
+        i%5===0
           ? 1.6
           : 1;
+
 
       ctx.beginPath();
 
       ctx.arc(
         sx,
-        sy + 6,
+        sy+6,
         r,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       ctx.fill();
@@ -2527,14 +2448,13 @@
     ctx.restore();
 
 
-    /*
-     * Clouds
-     */
+    /* CLOUDS */
 
     ctx.save();
 
     ctx.globalAlpha =
       0.35;
+
 
     const cloudDefs = [
 
@@ -2558,6 +2478,7 @@
 
     ];
 
+
     cloudDefs.forEach(
       (c,i)=>{
 
@@ -2567,41 +2488,37 @@
             c.sp *
             W *
             10 +
-            i * 220
+            i*220
           ) %
-          (W + 300)
+          (W+300)
           -150;
 
+
         const cy =
-          H * c.y;
+          H*c.y;
+
 
         ctx.fillStyle =
           '#fff';
+
 
         [
           [-30,0,26],
           [0,-10,32],
           [32,0,24],
           [-6,8,30]
+
         ].forEach(
           ([ox,oy,r])=>{
 
             ctx.beginPath();
 
             ctx.arc(
-              cx +
-                ox *
-                c.s,
-
-              cy +
-                oy *
-                c.s,
-
-              r *
-                c.s,
-
+              cx+ox*c.s,
+              cy+oy*c.s,
+              r*c.s,
               0,
-              Math.PI * 2
+              Math.PI*2
             );
 
             ctx.fill();
@@ -2612,18 +2529,18 @@
       }
     );
 
+
     ctx.restore();
 
 
-    /*
-     * Moon / glow
-     */
+    /* MOON / SUN GLOW */
 
     const gx =
-      W * 0.82;
+      W*0.82;
 
     const gy =
-      H * 0.16;
+      H*0.16;
+
 
     const glow =
       ctx.createRadialGradient(
@@ -2632,8 +2549,9 @@
         0,
         gx,
         gy,
-        H * 0.22
+        H*0.22
       );
+
 
     glow.addColorStop(
       0,
@@ -2645,6 +2563,7 @@
       'rgba(255,236,190,0)'
     );
 
+
     ctx.fillStyle =
       glow;
 
@@ -2653,17 +2572,15 @@
     ctx.arc(
       gx,
       gy,
-      H * 0.22,
+      H*0.22,
       0,
-      Math.PI * 2
+      Math.PI*2
     );
 
     ctx.fill();
 
 
-    /*
-     * Distant hills
-     */
+    /* HILLS */
 
     ctx.fillStyle =
       'rgba(80,60,90,0.35)';
@@ -2672,32 +2589,26 @@
 
     ctx.moveTo(
       0,
-      H * GROUND_Y_RATIO
+      H*GROUND_Y_RATIO
     );
 
     ctx.quadraticCurveTo(
-      W * 0.2,
-      H * (
-        GROUND_Y_RATIO - 0.09
-      ),
-      W * 0.4,
-      H * GROUND_Y_RATIO
+      W*0.2,
+      H*(GROUND_Y_RATIO-0.09),
+      W*0.4,
+      H*GROUND_Y_RATIO
     );
 
     ctx.quadraticCurveTo(
-      W * 0.65,
-      H * (
-        GROUND_Y_RATIO - 0.12
-      ),
+      W*0.65,
+      H*(GROUND_Y_RATIO-0.12),
       W,
-      H * (
-        GROUND_Y_RATIO - 0.02
-      )
+      H*(GROUND_Y_RATIO-0.02)
     );
 
     ctx.lineTo(
       W,
-      H * GROUND_Y_RATIO
+      H*GROUND_Y_RATIO
     );
 
     ctx.closePath();
@@ -2705,14 +2616,12 @@
     ctx.fill();
 
 
-    /*
-     * Ground
-     */
+    /* GROUND */
 
     const gr =
       ctx.createLinearGradient(
         0,
-        H * GROUND_Y_RATIO,
+        H*GROUND_Y_RATIO,
         0,
         H
       );
@@ -2727,21 +2636,19 @@
       '#d3bd8f'
     );
 
+
     ctx.fillStyle =
       gr;
 
     ctx.fillRect(
       0,
-      H * GROUND_Y_RATIO,
+      H*GROUND_Y_RATIO,
       W,
-      H -
-      H * GROUND_Y_RATIO
+      H-H*GROUND_Y_RATIO
     );
 
 
-    /*
-     * Flowers / dots
-     */
+    /* FLOWERS */
 
     for(
       let i=0;
@@ -2750,20 +2657,16 @@
     ){
 
       const dx =
-        (
-          i * 97 +
-          40
-        ) % W;
+        (i*97+40) %
+        W;
 
       const dy =
-        H * GROUND_Y_RATIO +
+        H*GROUND_Y_RATIO +
         14 +
-        (
-          i * 53 %
-          40
-        );
+        (i*53%40);
 
-      if(i % 4 === 0){
+
+      if(i%4===0){
 
         const petalColors = [
 
@@ -2774,14 +2677,16 @@
 
         ];
 
+
         const pc =
           petalColors[
-            i %
-            petalColors.length
+            i%petalColors.length
           ];
+
 
         ctx.fillStyle =
           pc;
+
 
         for(
           let k=0;
@@ -2790,30 +2695,25 @@
         ){
 
           const a =
-            k *
-            Math.PI /
-            2;
+            k*Math.PI/2;
+
 
           ctx.beginPath();
 
           ctx.ellipse(
-            dx +
-              Math.cos(a) * 3,
-
-            dy +
-              Math.sin(a) * 3,
-
+            dx+Math.cos(a)*3,
+            dy+Math.sin(a)*3,
             2.4,
             1.6,
-
             a,
             0,
-            Math.PI * 2
+            Math.PI*2
           );
 
           ctx.fill();
 
         }
+
 
         ctx.fillStyle =
           '#f0d15a';
@@ -2825,12 +2725,14 @@
           dy,
           1.4,
           0,
-          Math.PI * 2
+          Math.PI*2
         );
 
         ctx.fill();
 
-      }else{
+      }
+
+      else{
 
         ctx.fillStyle =
           'rgba(107,74,53,0.18)';
@@ -2842,7 +2744,7 @@
           dy,
           2.5,
           0,
-          Math.PI * 2
+          Math.PI*2
         );
 
         ctx.fill();
@@ -2852,9 +2754,7 @@
     }
 
 
-    /*
-     * Rainbow sparkles
-     */
+    /* RAINBOW SPARKLES */
 
     ctx.save();
 
@@ -2869,6 +2769,7 @@
 
     ];
 
+
     for(
       let i=0;
       i<10;
@@ -2877,38 +2778,42 @@
 
       const px =
         (
-          i * 211 +
+          i*211 +
           Math.sin(
-            now * 0.5 + i
-          ) * 30
+            now*0.5+i
+          )*30
         ) % W;
 
+
       const py =
-        H * 0.15 +
+        H*0.15 +
         (
-          now * 14 +
-          i * 57
-        ) %
-        (H * 0.55);
+          (
+            now*14 +
+            i*57
+          ) %
+          (H*0.55)
+        );
+
 
       const a =
         0.15 +
         0.25 *
         Math.abs(
           Math.sin(
-            now * 1.1 +
-            i * 1.3
+            now*1.1+i*1.3
           )
         );
+
 
       ctx.globalAlpha =
         a;
 
       ctx.fillStyle =
         sparkColors[
-          i %
-          sparkColors.length
+          i%sparkColors.length
         ];
+
 
       ctx.beginPath();
 
@@ -2917,7 +2822,7 @@
         py,
         2,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       ctx.fill();
@@ -2929,9 +2834,10 @@
   }
 
 
+
   /* =========================================================
      HANGING PEPPERS
-     ========================================================= */
+  ========================================================= */
 
   function drawHangingPeppers(
     cx,
@@ -2942,7 +2848,8 @@
       branchSpawnPoints();
 
     const now =
-      performance.now() / 1000;
+      performance.now()/1000;
+
 
     const hangColors = [
 
@@ -2955,35 +2862,40 @@
 
     ];
 
+
     pts.forEach(
       (p,i)=>{
 
         const sway =
           Math.sin(
-            now * 1.3 +
-            i * 1.7
-          ) * 0.14;
+            now*1.3+i*1.7
+          )*0.14;
+
 
         const size =
           15 +
-          (i % 3) * 3;
+          (i%3)*3;
+
 
         ctx.save();
 
+
         ctx.translate(
           p.x,
-          p.y + 4
+          p.y+4
         );
 
         ctx.rotate(
           sway
         );
 
+
         ctx.strokeStyle =
           '#3f5c34';
 
         ctx.lineWidth =
           1.4;
+
 
         ctx.beginPath();
 
@@ -2994,19 +2906,20 @@
 
         ctx.lineTo(
           0,
-          -size * 0.5
+          -size*0.5
         );
 
         ctx.stroke();
 
+
         drawPepperShape(
           ctx,
           hangColors[
-            i %
-            hangColors.length
+            i%hangColors.length
           ],
           size
         );
+
 
         ctx.restore();
 
@@ -3016,9 +2929,10 @@
   }
 
 
+
   /* =========================================================
      TREE
-     ========================================================= */
+  ========================================================= */
 
   function drawTree(){
 
@@ -3029,17 +2943,13 @@
       treeTopY();
 
     const baseY =
-      H *
-      GROUND_Y_RATIO +
-      6;
+      H*GROUND_Y_RATIO+6;
 
     const trunkW =
-      W * 0.045;
+      W*0.045;
 
 
-    /*
-     * Trunk
-     */
+    /* TRUNK */
 
     ctx.strokeStyle =
       '#4f3527';
@@ -3047,38 +2957,30 @@
     ctx.fillStyle =
       '#6b4a35';
 
+
     ctx.beginPath();
 
     ctx.moveTo(
-      cx - trunkW,
+      cx-trunkW,
       baseY
     );
 
     ctx.quadraticCurveTo(
-      cx -
-        trunkW * 1.3,
-      baseY -
-        H * 0.22,
-      cx -
-        trunkW * 0.5,
-      topY +
-        H * 0.14
+      cx-trunkW*1.3,
+      baseY-H*0.22,
+      cx-trunkW*0.5,
+      topY+H*0.14
     );
 
     ctx.lineTo(
-      cx +
-        trunkW * 0.5,
-      topY +
-        H * 0.14
+      cx+trunkW*0.5,
+      topY+H*0.14
     );
 
     ctx.quadraticCurveTo(
-      cx +
-        trunkW * 1.3,
-      baseY -
-        H * 0.22,
-      cx +
-        trunkW,
+      cx+trunkW*1.3,
+      baseY-H*0.22,
+      cx+trunkW,
       baseY
     );
 
@@ -3087,9 +2989,7 @@
     ctx.fill();
 
 
-    /*
-     * Branches
-     */
+    /* BRANCHES */
 
     ctx.lineCap =
       'round';
@@ -3098,10 +2998,12 @@
       '#6b4a35';
 
     ctx.lineWidth =
-      W * 0.012;
+      W*0.012;
+
 
     const pts =
       branchSpawnPoints();
+
 
     pts.forEach(
       p=>{
@@ -3110,17 +3012,16 @@
 
         ctx.moveTo(
           cx,
-          topY +
-            H * 0.14
+          topY+H*0.14
         );
 
         ctx.quadraticCurveTo(
-          (cx + p.x) / 2,
+          (cx+p.x)/2,
           (
-            topY +
-            H * 0.14 +
+            topY+
+            H*0.14+
             p.y
-          ) / 2 - 10,
+          )/2-10,
           p.x,
           p.y
         );
@@ -3131,13 +3032,11 @@
     );
 
 
-    /*
-     * Foliage
-     */
+    /* FOLIAGE */
 
     const crownY =
-      topY +
-      H * 0.16;
+      topY+H*0.16;
+
 
     const blobs = [
 
@@ -3178,6 +3077,7 @@
 
     ];
 
+
     blobs.forEach(
       b=>{
 
@@ -3187,19 +3087,13 @@
         ctx.beginPath();
 
         ctx.ellipse(
-          cx +
-            W * b.dx,
-
-          crownY +
-            H * b.dy,
-
-          W * b.r,
-
-          W * b.r * 0.78,
-
+          cx+W*b.dx,
+          crownY+H*b.dy,
+          W*b.r,
+          W*b.r*0.78,
           0,
           0,
-          Math.PI * 2
+          Math.PI*2
         );
 
         ctx.fill();
@@ -3216,9 +3110,10 @@
   }
 
 
+
   /* =========================================================
      PEPPER SHAPE
-     ========================================================= */
+  ========================================================= */
 
   function drawPepperShape(
     pctx,
@@ -3229,43 +3124,46 @@
     pctx.fillStyle =
       color;
 
+
     pctx.beginPath();
 
     pctx.moveTo(
       0,
-      -s * 0.5
+      -s*0.5
     );
 
     pctx.quadraticCurveTo(
-      s * 0.55,
-      -s * 0.35,
-      s * 0.32,
-      s * 0.25
+      s*0.55,
+      -s*0.35,
+      s*0.32,
+      s*0.25
     );
 
     pctx.quadraticCurveTo(
-      s * 0.15,
-      s * 0.6,
-      -s * 0.05,
-      s * 0.6
+      s*0.15,
+      s*0.6,
+      -s*0.05,
+      s*0.6
     );
 
     pctx.quadraticCurveTo(
-      -s * 0.35,
-      s * 0.4,
-      -s * 0.25,
+      -s*0.35,
+      s*0.4,
+      -s*0.25,
       0
     );
 
     pctx.quadraticCurveTo(
-      -s * 0.4,
-      -s * 0.3,
+      -s*0.4,
+      -s*0.3,
       0,
-      -s * 0.5
+      -s*0.5
     );
 
     pctx.fill();
 
+
+    /* HIGHLIGHT */
 
     pctx.fillStyle =
       'rgba(255,255,255,0.35)';
@@ -3273,34 +3171,37 @@
     pctx.beginPath();
 
     pctx.ellipse(
-      -s * 0.08,
-      -s * 0.1,
-      s * 0.09,
-      s * 0.16,
+      -s*0.08,
+      -s*0.1,
+      s*0.09,
+      s*0.16,
       0.4,
       0,
-      Math.PI * 2
+      Math.PI*2
     );
 
     pctx.fill();
 
 
+    /* STEM */
+
     pctx.strokeStyle =
       '#3f5c34';
 
     pctx.lineWidth =
-      s * 0.12;
+      s*0.12;
+
 
     pctx.beginPath();
 
     pctx.moveTo(
       0,
-      -s * 0.5
+      -s*0.5
     );
 
     pctx.lineTo(
-      s * 0.06,
-      -s * 0.72
+      s*0.06,
+      -s*0.72
     );
 
     pctx.stroke();
@@ -3308,9 +3209,10 @@
   }
 
 
+
   /* =========================================================
      FALLING PEPPER
-     ========================================================= */
+  ========================================================= */
 
   function drawPepper(p){
 
@@ -3318,10 +3220,7 @@
 
     ctx.translate(
       p.x +
-        Math.sin(
-          p.wobble
-        ) * 4,
-
+      Math.sin(p.wobble)*4,
       p.y
     );
 
@@ -3340,9 +3239,10 @@
   }
 
 
+
   /* =========================================================
-     LEAF / BAD POD
-     ========================================================= */
+     BAD POD
+  ========================================================= */
 
   function drawLeaf(l){
 
@@ -3350,10 +3250,7 @@
 
     ctx.translate(
       l.x +
-        Math.sin(
-          l.wobble
-        ) * 5,
-
+      Math.sin(l.wobble)*5,
       l.y
     );
 
@@ -3361,25 +3258,29 @@
       l.rot
     );
 
+
     const s =
       l.size;
 
+
     ctx.fillStyle =
       '#8a5a3b';
+
 
     ctx.beginPath();
 
     ctx.ellipse(
       0,
       0,
-      s * 0.55,
-      s * 0.28,
+      s*0.55,
+      s*0.28,
       0,
       0,
-      Math.PI * 2
+      Math.PI*2
     );
 
     ctx.fill();
+
 
     ctx.strokeStyle =
       '#5f3d26';
@@ -3387,28 +3288,31 @@
     ctx.lineWidth =
       1.5;
 
+
     ctx.beginPath();
 
     ctx.moveTo(
-      -s * 0.5,
+      -s*0.5,
       0
     );
 
     ctx.lineTo(
-      s * 0.5,
+      s*0.5,
       0
     );
 
     ctx.stroke();
+
 
     ctx.restore();
 
   }
 
 
+
   /* =========================================================
      STAR
-     ========================================================= */
+  ========================================================= */
 
   function drawStar(
     tctx,
@@ -3428,7 +3332,9 @@
     tctx.fillStyle =
       color;
 
+
     tctx.beginPath();
+
 
     for(
       let i=0;
@@ -3437,34 +3343,25 @@
     ){
 
       const a =
-        -Math.PI / 2 +
-        i *
-        (
-          2 *
-          Math.PI /
-          5
-        );
+        -Math.PI/2 +
+        i*(2*Math.PI/5);
 
       const a2 =
-        a +
-        Math.PI / 5;
+        a+Math.PI/5;
+
 
       tctx.lineTo(
-        Math.cos(a) * r,
-        Math.sin(a) * r
+        Math.cos(a)*r,
+        Math.sin(a)*r
       );
 
       tctx.lineTo(
-        Math.cos(a2) *
-          r *
-          0.45,
-
-        Math.sin(a2) *
-          r *
-          0.45
+        Math.cos(a2)*r*0.45,
+        Math.sin(a2)*r*0.45
       );
 
     }
+
 
     tctx.closePath();
 
@@ -3475,9 +3372,10 @@
   }
 
 
+
   /* =========================================================
-     ROUND RECT STROKE
-     ========================================================= */
+     ROUND RECT
+  ========================================================= */
 
   function roundRectStroke(
     tctx,
@@ -3491,55 +3389,55 @@
     tctx.beginPath();
 
     tctx.moveTo(
-      x + r,
+      x+r,
       y
     );
 
     tctx.lineTo(
-      x + w - r,
+      x+w-r,
       y
     );
 
     tctx.quadraticCurveTo(
-      x + w,
+      x+w,
       y,
-      x + w,
-      y + r
+      x+w,
+      y+r
     );
 
     tctx.lineTo(
-      x + w,
-      y + h - r
+      x+w,
+      y+h-r
     );
 
     tctx.quadraticCurveTo(
-      x + w,
-      y + h,
-      x + w - r,
-      y + h
+      x+w,
+      y+h,
+      x+w-r,
+      y+h
     );
 
     tctx.lineTo(
-      x + r,
-      y + h
+      x+r,
+      y+h
     );
 
     tctx.quadraticCurveTo(
       x,
-      y + h,
+      y+h,
       x,
-      y + h - r
+      y+h-r
     );
 
     tctx.lineTo(
       x,
-      y + r
+      y+r
     );
 
     tctx.quadraticCurveTo(
       x,
       y,
-      x + r,
+      x+r,
       y
     );
 
@@ -3550,9 +3448,10 @@
   }
 
 
+
   /* =========================================================
      CHARACTER
-     ========================================================= */
+  ========================================================= */
 
   function drawCharacter(
     tctx,
@@ -3568,21 +3467,25 @@
       SKINS[skinId] ||
       SKINS.pioneer;
 
+
     const bob =
       Math.sin(walk) *
       3 *
       (
-        Math.abs(vx) > 0.2
+        Math.abs(vx)>0.2
           ? 1
           : 0.3
       );
 
+
     tctx.save();
+
 
     tctx.translate(
       cx,
-      cy + bob
+      cy+bob
     );
+
 
     tctx.scale(
       dir,
@@ -3590,9 +3493,7 @@
     );
 
 
-    /*
-     * Shadow
-     */
+    /* SHADOW */
 
     tctx.fillStyle =
       'rgba(60,40,30,0.25)';
@@ -3606,48 +3507,47 @@
       8,
       0,
       0,
-      Math.PI * 2
+      Math.PI*2
     );
 
     tctx.fill();
 
 
-    /*
-     * Pants / legs
-     */
+    /* PANTS */
 
     tctx.fillStyle =
       skin.pantsColor;
+
 
     const legSwing =
       Math.sin(walk) *
       6 *
       (
-        Math.abs(vx) > 0.2
+        Math.abs(vx)>0.2
           ? 1
           : 0
       );
 
+
     tctx.fillRect(
       -14,
-      -34 +
-        legSwing * 0.2,
+      -34+legSwing*0.2,
       10,
       34
     );
+
 
     tctx.fillRect(
       4,
-      -34 -
-        legSwing * 0.2,
+      -34-legSwing*0.2,
       10,
       34
     );
 
 
-    /* =======================================================
+    /* =====================================================
        TOP
-       ======================================================= */
+    ===================================================== */
 
     if(
       skin.top ===
@@ -3656,6 +3556,7 @@
 
       tctx.fillStyle =
         skin.topColor1;
+
 
       tctx.beginPath();
 
@@ -3687,6 +3588,7 @@
       tctx.fillStyle =
         skin.topColor2;
 
+
       tctx.beginPath();
 
       tctx.moveTo(
@@ -3715,14 +3617,13 @@
 
     }
 
+
     else if(
       skin.top ===
       'trench'
     ){
 
-      /*
-       * Black turtleneck
-       */
+      /* BLACK TURTLENECK */
 
       tctx.fillStyle =
         '#141414';
@@ -3757,6 +3658,7 @@
       tctx.fillStyle =
         '#0c0c0c';
 
+
       tctx.beginPath();
 
       tctx.moveTo(
@@ -3784,9 +3686,7 @@
       tctx.fill();
 
 
-      /*
-       * Coat
-       */
+      /* COAT */
 
       const tg =
         tctx.createLinearGradient(
@@ -3795,6 +3695,7 @@
           0,
           -14
         );
+
 
       tg.addColorStop(
         0,
@@ -3805,6 +3706,7 @@
         1,
         skin.topColor2
       );
+
 
       tctx.fillStyle =
         tg;
@@ -3864,12 +3766,11 @@
       tctx.fill();
 
 
-      /*
-       * Lapels
-       */
+      /* LAPELS */
 
       tctx.fillStyle =
         skin.topColor2;
+
 
       tctx.beginPath();
 
@@ -3915,12 +3816,11 @@
       tctx.fill();
 
 
-      /*
-       * Belt
-       */
+      /* BELT */
 
       tctx.fillStyle =
         skin.trimColor;
+
 
       tctx.fillRect(
         -26,
@@ -3938,11 +3838,8 @@
 
     }
 
-    else{
 
-      /*
-       * Normal shirt
-       */
+    else{
 
       const tg =
         tctx.createLinearGradient(
@@ -3951,6 +3848,7 @@
           0,
           -30
         );
+
 
       tg.addColorStop(
         0,
@@ -3962,8 +3860,10 @@
         skin.topColor2
       );
 
+
       tctx.fillStyle =
         tg;
+
 
       tctx.beginPath();
 
@@ -4000,6 +3900,7 @@
         tctx.fillStyle =
           skin.neckerchief;
 
+
         tctx.beginPath();
 
         tctx.moveTo(
@@ -4021,6 +3922,7 @@
 
         tctx.fill();
 
+
         tctx.strokeStyle =
           'rgba(0,0,0,0.12)';
 
@@ -4031,6 +3933,7 @@
 
       }
 
+
       else{
 
         tctx.strokeStyle =
@@ -4038,6 +3941,7 @@
 
         tctx.lineWidth =
           2.5;
+
 
         tctx.beginPath();
 
@@ -4058,6 +3962,7 @@
           [3,4]
         );
 
+
         tctx.beginPath();
 
         tctx.moveTo(
@@ -4072,6 +3977,7 @@
 
         tctx.stroke();
 
+
         tctx.setLineDash([]);
 
       }
@@ -4079,23 +3985,49 @@
 
       /* =====================================================
          COMSOL BOSS
-         ===================================================== */
+      ===================================================== */
 
       if(
         skin.pocketProtector
       ){
 
         /*
-         * Large visible COMSOL text
-         */
+          Large visible COMSOL logo
+        */
 
         tctx.save();
 
         tctx.fillStyle =
-          '#f7f1df';
+          'rgba(255,255,255,0.92)';
+
+
+        tctx.beginPath();
+
+        tctx.roundRect(
+          -17,
+          -67,
+          34,
+          19,
+          3
+        );
+
+        tctx.fill();
+
+
+        tctx.strokeStyle =
+          '#2f5c34';
+
+        tctx.lineWidth =
+          1.2;
+
+        tctx.stroke();
+
+
+        tctx.fillStyle =
+          '#315f35';
 
         tctx.font =
-          'bold 6px Arial';
+          '700 6px Arial';
 
         tctx.textAlign =
           'center';
@@ -4103,99 +4035,33 @@
         tctx.textBaseline =
           'middle';
 
+
         tctx.fillText(
           '🧠 COMSOL',
           0,
-          -58
+          -57
         );
+
 
         tctx.restore();
-
-
-        /*
-         * Pocket protector
-         */
-
-        tctx.fillStyle =
-          '#f4f0e6';
-
-        tctx.fillRect(
-          2,
-          -68,
-          7,
-          9
-        );
-
-        tctx.strokeStyle =
-          '#cfc9b8';
-
-        tctx.lineWidth =
-          0.7;
-
-        tctx.strokeRect(
-          2,
-          -68,
-          7,
-          9
-        );
-
-
-        const penColors = [
-
-          '#e85c5c',
-          '#5aa7d6',
-          '#3a2416'
-
-        ];
-
-        penColors.forEach(
-          (c,i)=>{
-
-            tctx.strokeStyle =
-              c;
-
-            tctx.lineWidth =
-              1.3;
-
-            tctx.lineCap =
-              'round';
-
-            tctx.beginPath();
-
-            tctx.moveTo(
-              3.3 +
-                i * 1.7,
-              -68
-            );
-
-            tctx.lineTo(
-              3.3 +
-                i * 1.7,
-              -73
-            );
-
-            tctx.stroke();
-
-          }
-        );
 
       }
 
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        ARMS
-       ======================================================= */
+    ===================================================== */
 
     const armSwing =
       Math.sin(
-        walk +
-        Math.PI
+        walk+Math.PI
       ) *
       8 *
       (
-        Math.abs(vx) > 0.2
+        Math.abs(vx)>0.2
           ? 1
           : 0
       );
@@ -4262,8 +4128,7 @@
 
       tctx.lineTo(
         -30,
-        -45 +
-          armSwing * 0.3
+        -45+armSwing*0.3
       );
 
       tctx.stroke();
@@ -4278,13 +4143,13 @@
 
       tctx.lineTo(
         30,
-        -45 -
-          armSwing * 0.3
+        -45-armSwing*0.3
       );
 
       tctx.stroke();
 
     }
+
 
     else{
 
@@ -4307,8 +4172,7 @@
 
       tctx.lineTo(
         -30,
-        -45 +
-          armSwing * 0.3
+        -45+armSwing*0.3
       );
 
       tctx.stroke();
@@ -4323,8 +4187,7 @@
 
       tctx.lineTo(
         30,
-        -45 -
-          armSwing * 0.3
+        -45-armSwing*0.3
       );
 
       tctx.stroke();
@@ -4332,9 +4195,10 @@
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        GUITAR
-       ======================================================= */
+    ===================================================== */
 
     if(
       skin.accessory ===
@@ -4356,6 +4220,7 @@
       tctx.fillStyle =
         '#8a5a3b';
 
+
       tctx.beginPath();
 
       tctx.ellipse(
@@ -4365,7 +4230,7 @@
         13,
         0,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       tctx.fill();
@@ -4380,7 +4245,7 @@
         8,
         0,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       tctx.fill();
@@ -4389,6 +4254,7 @@
       tctx.fillStyle =
         '#3f2a1a';
 
+
       tctx.beginPath();
 
       tctx.arc(
@@ -4396,7 +4262,7 @@
         11,
         3.2,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       tctx.fill();
@@ -4404,6 +4270,7 @@
 
       tctx.fillStyle =
         '#5f3d26';
+
 
       tctx.fillRect(
         -1.6,
@@ -4415,6 +4282,7 @@
 
       tctx.fillStyle =
         '#4a3320';
+
 
       tctx.fillRect(
         -3.4,
@@ -4466,12 +4334,14 @@
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        BASKET
-       ======================================================= */
+    ===================================================== */
 
     tctx.fillStyle =
       '#8a5a3b';
+
 
     tctx.beginPath();
 
@@ -4521,7 +4391,7 @@
       );
 
       tctx.lineTo(
-        i * 0.8,
+        i*0.8,
         -28
       );
 
@@ -4547,9 +4417,10 @@
     tctx.stroke();
 
 
-    /* =======================================================
+
+    /* =====================================================
        NECK
-       ======================================================= */
+    ===================================================== */
 
     tctx.fillStyle =
       '#e8b98a';
@@ -4562,17 +4433,14 @@
     );
 
 
-    /* =======================================================
+
+    /* =====================================================
        HAIR BACK
-       ======================================================= */
+    ===================================================== */
 
     tctx.fillStyle =
       skin.hair;
 
-
-    /*
-     * Ongo
-     */
 
     if(
       skin.hairStyle ===
@@ -4643,14 +4511,17 @@
     }
 
 
-    /*
-     * Original medium-length wavy hair
-     */
-
     else if(
       skin.hairStyle ===
       'extra-wavy'
     ){
+
+      /*
+        ORIGINAL STYLE:
+        medium-length,
+        clearly wavy,
+        not super long.
+      */
 
       tctx.beginPath();
 
@@ -4750,17 +4621,11 @@
     }
 
 
-    /*
-     * Shorter but still wavy hair
-     *
-     * This is used for Comsol Boss,
-     * Ukulele Boss and Winter Edition.
-     */
+    else{
 
-    else if(
-      skin.hairStyle ===
-      'extra-wavy-short'
-    ){
+      /*
+        SHORTER WAVY VERSION
+      */
 
       tctx.beginPath();
 
@@ -4860,76 +4725,14 @@
     }
 
 
-    else{
 
-      tctx.beginPath();
-
-      tctx.moveTo(
-        -16,
-        -84
-      );
-
-      tctx.bezierCurveTo(
-        -26,
-        -70,
-        -24,
-        -40,
-        -18,
-        -24
-      );
-
-      tctx.bezierCurveTo(
-        -14,
-        -38,
-        -15,
-        -60,
-        -13,
-        -80
-      );
-
-      tctx.closePath();
-
-      tctx.fill();
-
-
-      tctx.beginPath();
-
-      tctx.moveTo(
-        16,
-        -84
-      );
-
-      tctx.bezierCurveTo(
-        26,
-        -70,
-        24,
-        -40,
-        18,
-        -24
-      );
-
-      tctx.bezierCurveTo(
-        14,
-        -38,
-        15,
-        -60,
-        13,
-        -80
-      );
-
-      tctx.closePath();
-
-      tctx.fill();
-
-    }
-
-
-    /* =======================================================
+    /* =====================================================
        HEAD
-       ======================================================= */
+    ===================================================== */
 
     tctx.fillStyle =
       '#f0c99a';
+
 
     tctx.beginPath();
 
@@ -4938,18 +4741,20 @@
       -92,
       16,
       0,
-      Math.PI * 2
+      Math.PI*2
     );
 
     tctx.fill();
 
 
-    /* =======================================================
+
+    /* =====================================================
        HAIR TOP
-       ======================================================= */
+    ===================================================== */
 
     tctx.fillStyle =
       skin.hair;
+
 
     tctx.beginPath();
 
@@ -4957,8 +4762,8 @@
       0,
       -96,
       17,
-      Math.PI * 1.05,
-      Math.PI * 1.95
+      Math.PI*1.05,
+      Math.PI*1.95
     );
 
     tctx.fill();
@@ -4969,10 +4774,6 @@
       'bob'
     ){
 
-      /*
-       * Straight fringe
-       */
-
       tctx.beginPath();
 
       tctx.moveTo(
@@ -5001,14 +4802,11 @@
 
     }
 
+
     else if(
       skin.hairStyle ===
       'extra-wavy-short'
     ){
-
-      /*
-       * Side-swept wavy fringe
-       */
 
       tctx.beginPath();
 
@@ -5045,9 +4843,10 @@
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        HEADWEAR
-       ======================================================= */
+    ===================================================== */
 
     if(
       skin.headwear ===
@@ -5057,6 +4856,7 @@
       tctx.fillStyle =
         skin.headwearColor;
 
+
       tctx.fillRect(
         -16,
         -101,
@@ -5064,8 +4864,10 @@
         5
       );
 
+
       tctx.fillStyle =
         '#e0a63a';
+
 
       tctx.beginPath();
 
@@ -5074,12 +4876,13 @@
         -98,
         2.4,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       tctx.fill();
 
     }
+
 
     else if(
       skin.headwear ===
@@ -5097,9 +4900,10 @@
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        GLASSES
-       ======================================================= */
+    ===================================================== */
 
     if(
       skin.glasses ===
@@ -5112,6 +4916,7 @@
       tctx.lineWidth =
         3;
 
+
       roundRectStroke(
         tctx,
         -15,
@@ -5121,6 +4926,7 @@
         2
       );
 
+
       roundRectStroke(
         tctx,
         2,
@@ -5129,6 +4935,7 @@
         12,
         2
       );
+
 
       tctx.beginPath();
 
@@ -5146,6 +4953,7 @@
 
     }
 
+
     else{
 
       tctx.strokeStyle =
@@ -5154,6 +4962,7 @@
       tctx.lineWidth =
         2;
 
+
       tctx.beginPath();
 
       tctx.arc(
@@ -5161,7 +4970,7 @@
         -91,
         6,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       tctx.stroke();
@@ -5174,7 +4983,7 @@
         -91,
         6,
         0,
-        Math.PI * 2
+        Math.PI*2
       );
 
       tctx.stroke();
@@ -5197,9 +5006,10 @@
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        SMILE
-       ======================================================= */
+    ===================================================== */
 
     tctx.strokeStyle =
       '#8a4a30';
@@ -5207,14 +5017,15 @@
     tctx.lineWidth =
       1.6;
 
+
     tctx.beginPath();
 
     tctx.arc(
       0,
       -86,
       4,
-      0.15 * Math.PI,
-      0.85 * Math.PI
+      0.15*Math.PI,
+      0.85*Math.PI
     );
 
     tctx.stroke();
@@ -5225,9 +5036,10 @@
   }
 
 
+
   /* =========================================================
      DRAW BOY
-     ========================================================= */
+  ========================================================= */
 
   function drawBoy(){
 
@@ -5244,9 +5056,10 @@
   }
 
 
+
   /* =========================================================
-     SKIN THUMBNAILS
-     ========================================================= */
+     THUMBNAILS
+  ========================================================= */
 
   function renderSkinThumbnails(){
 
@@ -5269,6 +5082,7 @@
             '2d'
           );
 
+
         tctx.clearRect(
           0,
           0,
@@ -5279,8 +5093,8 @@
 
         drawCharacter(
           tctx,
-          cvs.width / 2,
-          cvs.height - 8,
+          cvs.width/2,
+          cvs.height-8,
           skinId,
           0,
           0,
@@ -5309,16 +5123,18 @@
             currentSkin =
               skinId;
 
+
             document
               .querySelectorAll(
                 '.skin-option'
               )
               .forEach(
-                b =>
+                b=>{
                   b.classList.toggle(
                     'selected',
                     b === btn
-                  )
+                  );
+                }
               );
 
 
@@ -5340,9 +5156,10 @@
   }
 
 
+
   /* =========================================================
      PARTICLES
-     ========================================================= */
+  ========================================================= */
 
   function drawParticles(){
 
@@ -5358,6 +5175,7 @@
         ctx.fillStyle =
           p.color;
 
+
         ctx.beginPath();
 
         ctx.arc(
@@ -5365,7 +5183,7 @@
           p.y,
           3,
           0,
-          Math.PI * 2
+          Math.PI*2
         );
 
         ctx.fill();
@@ -5373,31 +5191,28 @@
       }
     );
 
-    ctx.globalAlpha =
-      1;
+
+    ctx.globalAlpha = 1;
 
   }
 
 
+
   /* =========================================================
-     GAME UPDATE
-     ========================================================= */
+     UPDATE
+  ========================================================= */
 
   function update(dt){
 
     elapsed += dt;
 
 
-    /* =======================================================
+    /* =====================================================
        MOVEMENT
-       ======================================================= */
+    ===================================================== */
 
     let move = 0;
 
-
-    /*
-     * PC
-     */
 
     if(
       keys['ArrowLeft'] ||
@@ -5422,83 +5237,76 @@
 
 
     /*
-     * MOBILE
-     *
-     * Follow the finger.
-     */
+      MOBILE:
+
+      The character smoothly follows
+      the position of the finger.
+    */
 
     if(
-      touchActive &&
-      window.matchMedia(
-        '(pointer: coarse)'
-      ).matches
+      touchActive
     ){
 
-      const diff =
+      const difference =
         touchX -
         boy.x;
 
+
       if(
-        Math.abs(diff) >
-        8
+        Math.abs(
+          difference
+        ) > 8
       ){
 
         move =
-          diff > 0
+          difference > 0
             ? 1
             : -1;
 
       }
 
-      /*
-       * Mobile movement is a little smoother.
-       */
+      else{
+
+        move = 0;
+
+      }
+
+    }
+
+
+    boy.vx =
+      move *
+      boy.speed;
+
+
+    /*
+      MOBILE SPEED:
+
+      Make movement a little faster
+      on small screens.
+    */
+
+    if(
+      touchActive &&
+      W < 700
+    ){
 
       boy.vx =
-        diff *
-        0.12;
-
-      boy.vx =
+        move *
         Math.max(
-          -boy.speed,
-          Math.min(
-            boy.speed,
-            boy.vx
-          )
+          boy.speed,
+          W*0.018
         );
 
     }
 
-    else{
-
-      boy.vx =
-        move *
-        boy.speed;
-
-    }
-
 
     if(
-      !touchActive ||
-      !window.matchMedia(
-        '(pointer: coarse)'
-      ).matches
-    ){
-
-      boy.vx =
-        move *
-        boy.speed;
-
-    }
-
-
-    if(
-      Math.abs(boy.vx) >
-      0.1
+      move !== 0
     ){
 
       boy.dir =
-        boy.vx > 0
+        move > 0
           ? 1
           : -1;
 
@@ -5511,11 +5319,9 @@
 
     boy.x =
       Math.max(
-        w0() * 0.5 + 10,
+        boy.w*0.5+10,
         Math.min(
-          W -
-          w0() * 0.5 -
-          10,
+          W-boy.w*0.5-10,
           boy.x
         )
       );
@@ -5524,25 +5330,23 @@
     boy.walk +=
       Math.abs(
         boy.vx
-      ) *
-      0.05 +
+      )*0.05+
       0.02;
 
 
-    /* =======================================================
-       SPAWN
-       ======================================================= */
 
-    spawnTimer +=
-      dt;
+    /* =====================================================
+       SPAWN
+    ===================================================== */
+
+    spawnTimer += dt;
 
 
     spawnInterval =
       Math.max(
         420,
         900 -
-        elapsed / 1000 *
-        6
+        elapsed/1000*6
       );
 
 
@@ -5551,8 +5355,8 @@
       spawnInterval
     ){
 
-      spawnTimer =
-        0;
+      spawnTimer = 0;
+
 
       if(
         Math.random() <
@@ -5572,71 +5376,56 @@
     }
 
 
-    /* =======================================================
-       COLLISION
-       ======================================================= */
+
+    /* =====================================================
+       OBJECT MOVEMENT
+    ===================================================== */
 
     const catchY =
-      boy.y - 40;
+      boy.y-40;
 
     const catchXRange =
       34;
 
 
-    /* =======================================================
-       FALLING PEPPERS
-       ======================================================= */
-
     peppers.forEach(
       p=>{
 
-        p.y +=
-          p.vy;
+        p.y += p.vy;
 
-        p.x +=
-          p.vx;
+        p.x += p.vx;
 
-        p.rot +=
-          p.vrot;
+        p.rot += p.vrot;
 
-        p.wobble +=
-          0.06;
+        p.wobble += 0.06;
 
       }
     );
 
-
-    /* =======================================================
-       LEAVES
-       ======================================================= */
 
     leaves.forEach(
       l=>{
 
-        l.y +=
-          l.vy;
+        l.y += l.vy;
 
-        l.x +=
-          l.vx;
+        l.x += l.vx;
 
-        l.rot +=
-          l.vrot;
+        l.rot += l.vrot;
 
-        l.wobble +=
-          0.06;
+        l.wobble += 0.06;
 
       }
     );
 
 
-    /* =======================================================
+
+    /* =====================================================
        CATCH PEPPERS
-       ======================================================= */
+    ===================================================== */
 
     for(
-      let i =
-        peppers.length - 1;
-      i >= 0;
+      let i=peppers.length-1;
+      i>=0;
       i--
     ){
 
@@ -5646,17 +5435,17 @@
 
       if(
         p.y >
-          catchY - 16 &&
+        catchY-16 &&
         p.y <
-          catchY + 16 &&
+        catchY+16 &&
         Math.abs(
-          p.x -
-          boy.x
+          p.x-boy.x
         ) <
-          catchXRange
+        catchXRange
       ){
 
         score += 1;
+
 
         spawnBurst(
           p.x,
@@ -5664,10 +5453,12 @@
           p.color
         );
 
+
         peppers.splice(
           i,
           1
         );
+
 
         updateHUD();
 
@@ -5678,9 +5469,7 @@
 
       if(
         p.y >
-        H *
-        GROUND_Y_RATIO +
-        10
+        H*GROUND_Y_RATIO+10
       ){
 
         peppers.splice(
@@ -5693,14 +5482,14 @@
     }
 
 
-    /* =======================================================
-       CATCH BAD PODS
-       ======================================================= */
+
+    /* =====================================================
+       BAD PODS
+    ===================================================== */
 
     for(
-      let i =
-        leaves.length - 1;
-      i >= 0;
+      let i=leaves.length-1;
+      i>=0;
       i--
     ){
 
@@ -5710,17 +5499,17 @@
 
       if(
         l.y >
-          catchY - 16 &&
+        catchY-16 &&
         l.y <
-          catchY + 16 &&
+        catchY+16 &&
         Math.abs(
-          l.x -
-          boy.x
+          l.x-boy.x
         ) <
-          catchXRange
+        catchXRange
       ){
 
         lives -= 1;
+
 
         spawnBurst(
           l.x,
@@ -5728,10 +5517,12 @@
           '#8a5a3b'
         );
 
+
         leaves.splice(
           i,
           1
         );
+
 
         updateHUD();
 
@@ -5744,9 +5535,8 @@
             false
           );
 
-          return;
-
         }
+
 
         continue;
 
@@ -5755,9 +5545,7 @@
 
       if(
         l.y >
-        H *
-        GROUND_Y_RATIO +
-        10
+        H*GROUND_Y_RATIO+10
       ){
 
         leaves.splice(
@@ -5770,24 +5558,21 @@
     }
 
 
-    /* =======================================================
+
+    /* =====================================================
        PARTICLES
-       ======================================================= */
+    ===================================================== */
 
     particles.forEach(
       p=>{
 
-        p.x +=
-          p.vx;
+        p.x += p.vx;
 
-        p.y +=
-          p.vy;
+        p.y += p.vy;
 
-        p.vy +=
-          0.15;
+        p.vy += 0.15;
 
-        p.life -=
-          0.03;
+        p.life -= 0.03;
 
       }
     );
@@ -5795,30 +5580,24 @@
 
     particles =
       particles.filter(
-        p =>
-          p.life > 0
+        p=>p.life>0
       );
 
   }
 
 
-  function w0(){
-
-    return boy.w;
-
-  }
-
 
   /* =========================================================
      END GAME
-     ========================================================= */
+  ========================================================= */
 
   function endGame(
     won
   ){
 
-    running =
-      false;
+    running = false;
+
+    touchActive = false;
 
     stopMusic();
 
@@ -5828,23 +5607,12 @@
         'visible'
       );
 
-    gameControls
-      .classList
-      .add(
-        'hidden'
-      );
-
-    mobileHint
-      .classList
-      .add(
-        'hidden'
-      );
-
 
     if(won){
 
       endTitleEl.textContent =
         'Track Complete! 🎶';
+
 
       finalScoreText.textContent =
         'You survived to the end of the song! Peppers collected: ' +
@@ -5857,6 +5625,7 @@
 
       endTitleEl.textContent =
         'Harvest Complete!';
+
 
       finalScoreText.textContent =
         'Peppers collected: ' +
@@ -5875,20 +5644,19 @@
   }
 
 
-  /* =========================================================
-     GAME LOOP
-     ========================================================= */
 
-  let lastT =
-    null;
+  /* =========================================================
+     MAIN GAME LOOP
+  ========================================================= */
+
+  let lastT = null;
 
 
   function loop(t){
 
     if(!running){
 
-      lastT =
-        null;
+      lastT = null;
 
       return;
 
@@ -5899,33 +5667,22 @@
       lastT === null
     ){
 
-      lastT =
-        t;
+      lastT = t;
 
     }
 
 
     const dt =
       Math.min(
-        t -
-        lastT,
+        t-lastT,
         40
       );
 
-    lastT =
-      t;
+
+    lastT = t;
 
 
-    update(
-      dt
-    );
-
-
-    if(!running){
-
-      return;
-
-    }
+    update(dt);
 
 
     drawBackground();
@@ -5945,10 +5702,6 @@
     drawParticles();
 
 
-    /*
-     * Music progress
-     */
-
     if(
       songPlaying &&
       currentAudio &&
@@ -5962,9 +5715,10 @@
           currentAudio.duration
         );
 
+
       songProgressBar.style.width =
         (
-          prog * 100
+          prog*100
         ) +
         '%';
 
@@ -5978,9 +5732,10 @@
   }
 
 
+
   /* =========================================================
      START GAME
-     ========================================================= */
+  ========================================================= */
 
   function startGame(){
 
@@ -5988,11 +5743,13 @@
 
     resetGame();
 
+
     startScreen
       .classList
       .add(
         'hidden'
       );
+
 
     endScreen
       .classList
@@ -6000,32 +5757,15 @@
         'hidden'
       );
 
-    gameControls
-      .classList
-      .remove(
-        'hidden'
-      );
 
-    if(
-      window.matchMedia(
-        '(pointer: coarse)'
-      ).matches
-    ){
+    running = true;
 
-      mobileHint
-        .classList
-        .remove(
-          'hidden'
-        );
+    touchActive = false;
 
-    }
-
-
-    running =
-      true;
 
     songProgressBar.style.width =
       '0%';
+
 
     songProgressWrap
       .classList
@@ -6033,11 +5773,6 @@
         'visible'
       );
 
-
-    /*
-     * Start music only after
-     * clicking Play.
-     */
 
     playTrack(
       currentTrackId,
@@ -6062,140 +5797,104 @@
   }
 
 
+
   /* =========================================================
-     STOP BUTTON
-     ========================================================= */
+     MAIN MENU
+  ========================================================= */
 
-  document
-    .getElementById(
-      'btnGameStop'
-    )
-    .addEventListener(
-      'click',
-      ()=>{
+  function goToMainMenu(){
 
-        if(!running){
-          return;
-        }
+    running = false;
 
-        running =
-          false;
+    touchActive = false;
 
-        stopMusic();
+    stopMusic();
 
-        songProgressWrap
-          .classList
-          .remove(
-            'visible'
-          );
 
-        gameControls
-          .classList
-          .add(
-            'hidden'
-          );
+    songProgressWrap
+      .classList
+      .remove(
+        'visible'
+      );
 
-        mobileHint
-          .classList
-          .add(
-            'hidden'
-          );
 
-        endTitleEl.textContent =
-          'Game Stopped';
+    endScreen
+      .classList
+      .add(
+        'hidden'
+      );
 
-        finalScoreText.textContent =
-          'Peppers collected: ' +
-          score +
-          ' 🌶️';
 
-        endScreen
-          .classList
-          .remove(
-            'hidden'
-          );
+    startScreen
+      .classList
+      .remove(
+        'hidden'
+      );
 
-      }
-    );
+
+    resize();
+
+
+    boy.x =
+      W/2;
+
+    boy.y =
+      H*GROUND_Y_RATIO;
+
+
+    drawBackground();
+
+    drawTree();
+
+    drawBoy();
+
+  }
+
 
 
   /* =========================================================
-     MAIN MENU BUTTON
-     ========================================================= */
+     STOP GAME
+  ========================================================= */
 
-  document
-    .getElementById(
-      'btnGameMenu'
-    )
-    .addEventListener(
-      'click',
-      ()=>{
+  function stopGame(){
 
-        running =
-          false;
+    running = false;
 
-        stopMusic();
+    touchActive = false;
 
-        songProgressWrap
-          .classList
-          .remove(
-            'visible'
-          );
-
-        gameControls
-          .classList
-          .add(
-            'hidden'
-          );
-
-        mobileHint
-          .classList
-          .add(
-            'hidden'
-          );
-
-        endScreen
-          .classList
-          .add(
-            'hidden'
-          );
-
-        startScreen
-          .classList
-          .remove(
-            'hidden'
-          );
+    stopMusic();
 
 
-        /*
-         * Reset visual scene
-         */
+    songProgressWrap
+      .classList
+      .remove(
+        'visible'
+      );
 
-        resize();
 
-        boy.x =
-          W / 2;
+    endScreen
+      .classList
+      .remove(
+        'hidden'
+      );
 
-        boy.y =
-          H *
-          GROUND_Y_RATIO;
 
-        boy.vx =
-          0;
+    endTitleEl.textContent =
+      'Game Stopped';
 
-        drawBackground();
 
-        drawTree();
+    finalScoreText.textContent =
+      'Peppers collected: ' +
+      score +
+      ' 🌶️';
 
-        drawBoy();
+  }
 
-      }
-    );
 
 
   /* =========================================================
-     START
-     ========================================================= */
+     BUTTONS
+  ========================================================= */
 
   document
     .getElementById(
@@ -6206,10 +5905,6 @@
       startGame
     );
 
-
-  /* =========================================================
-     RESTART
-     ========================================================= */
 
   document
     .getElementById(
@@ -6231,23 +5926,16 @@
             'hidden'
           );
 
-        gameControls
-          .classList
-          .add(
-            'hidden'
-          );
 
         resize();
 
+
         boy.x =
-          W / 2;
+          W/2;
 
         boy.y =
-          H *
-          GROUND_Y_RATIO;
+          H*GROUND_Y_RATIO;
 
-        boy.vx =
-          0;
 
         drawBackground();
 
@@ -6259,18 +5947,34 @@
     );
 
 
+  stopGameBtn
+    .addEventListener(
+      'click',
+      stopGame
+    );
+
+
+  mainMenuBtn
+    .addEventListener(
+      'click',
+      goToMainMenu
+    );
+
+
+
   /* =========================================================
-     INITIAL FRAME
-     ========================================================= */
+     INITIALIZE
+  ========================================================= */
 
   resize();
 
+
   boy.x =
-    W / 2;
+    W/2;
 
   boy.y =
-    H *
-    GROUND_Y_RATIO;
+    H*GROUND_Y_RATIO;
+
 
   drawBackground();
 
@@ -6278,11 +5982,13 @@
 
   drawBoy();
 
+
   renderSkinThumbnails();
 
   renderMusicList();
 
 })();
+
 </script>
 
 </body>
